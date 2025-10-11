@@ -7,6 +7,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 
 @Component({
   selector: 'app-login',
+  standalone: true,
   imports: [ ReactiveFormsModule, NzButtonModule, NzCheckboxModule, NzFormModule, NzInputModule],
   templateUrl: './login.html',
   styleUrl: './login.scss'
