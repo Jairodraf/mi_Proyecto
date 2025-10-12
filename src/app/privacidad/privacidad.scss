@@ -1,0 +1,53 @@
+/* Fondo general similar al de tu página de Privacidad */
+:host {
+  display: block;
+  padding: 24px 16px 48px;
+  min-height: 100%;
+}
+
+/* Tipografía clara para títulos/lead como en Privacidad */
+.text-light {
+  color: #f1f5f9;
+}
+.lead {
+  color: #cbd5e1;
+  margin-bottom: 1.25rem;
+}
+
+/* “Card” centrada y estrecha, como tu recuadro blanco */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  margin: 0 auto;
+  max-width: 780px; /* ajusta al gusto (600–840px) */
+}
+.card-body {
+  padding: 24px;
+}
+
+/* Centrado y separación del formulario dentro de la card */
+.registro-container {
+  width: 100%;
+}
+
+/* NG-ZORRO ajustes suaves al layout vertical */
+[nz-form] {
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
+  .register-area {
+    margin-top: 8px;
+  }
+}
+
+/* Input group del teléfono: que no se “rompa” */
+.phone-select {
+  min-width: 88px;
+}
+
+/* (Opcional) botón ancho */
+button[nzType="primary"] {
+  width: 100%;
+}
+
+

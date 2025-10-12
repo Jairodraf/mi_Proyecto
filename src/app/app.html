@@ -1,6 +1,14 @@
-<nav>
-  <a routerLink="/login">Login</a>
-  <a routerLink="/registro">Registro</a>
-</nav>
+<div class="page-container">
+  <ng-container>
+    <!-- HEADER: visible en todas menos /login -->
+    <app-header *ngIf="!isLoginPage()"></app-header>
 
-<router-outlet></router-outlet>
+    <!-- MAIN: añade padding-top solo si hay header fijo -->
+    <main [ngClass]="{ 'pt-navbar': !isLoginPage() }">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- FOOTER: también oculto en /login si quieres -->
+    <app-footer *ngIf="!isLoginPage()"></app-footer>
+  </ng-container>
+</div>

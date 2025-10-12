@@ -1,13 +1,26 @@
-import { Component, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterOutlet } from '@angular/router';
+import { Footer } from './shared/footer/footer';
+import { Header } from "./shared/header/header";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule],
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, Footer, Header],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrls: ['./app.scss']
 })
 export class App {
-  protected readonly title = signal('mi_Proyecto');
+  constructor(public router: Router) {}
 
+  isLoginPage(): boolean {
+    // Devuelve true si estás en /login exactamente
+    return this.currentPath() === '/login';
+  }
+
+  currentPath(): string {
+    return this.router.url.split('?')[0].split('#')[0];
+  }
 }
+
