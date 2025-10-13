@@ -25,20 +25,16 @@ export class Registro implements OnInit, OnDestroy {
   private fb = inject(NonNullableFormBuilder);
   private destroy$ = new Subject<void>();
   validateForm = this.fb.group({
+    nombre: this.fb.control('', [Validators.required, Validators.minLength(3)]),
+    apellidos: this.fb.control('', [Validators.required, Validators.minLength(3)]),
+    dni: this.fb.control('', [Validators.required, Validators.minLength(9), Validators.maxLength(9)]),
     email: this.fb.control('', [Validators.email, Validators.required]),
     password: this.fb.control('', [Validators.required]),
     checkPassword: this.fb.control('', [Validators.required, this.confirmationValidator]),
-    nickname: this.fb.control('', [Validators.required]),
-    phoneNumberPrefix: this.fb.control<'+86' | '+87'>('+86'),
-    phoneNumber: this.fb.control('', [Validators.required]),
-    website: this.fb.control('', [Validators.required]),
-    captcha: this.fb.control('', [Validators.required]),
-    agree: this.fb.control(false)
+    phoneNumberPrefix: this.fb.control('+34'),
+    phoneNumber: this.fb.control('', [Validators.required, Validators.pattern(/^\d{9}$/)]),
+    rol: this.fb.control('', [Validators.required, Validators.minLength(3)]),
   });
-  captchaTooltipIcon: NzFormTooltipIcon = {
-    type: 'info-circle',
-    theme: 'twotone'
-  };
 
   ngOnInit(): void {
     this.validateForm.controls.password.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -72,9 +68,4 @@ export class Registro implements OnInit, OnDestroy {
     }
     return {};
   }
-
-  getCaptcha(e: MouseEvent): void {
-    e.preventDefault();
-  }
-
 }

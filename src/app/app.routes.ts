@@ -1,14 +1,21 @@
 import { Routes } from '@angular/router';
-import { Login } from './login/login';
-import { Registro } from './registro/registro';
-import { Privacidad } from './privacidad/privacidad';
-import { Contacto } from './contacto/contacto';
+import { Login } from './pages/login/login';
+import { Registro } from './pages/registro/registro';
+import { Privacidad } from './pages/privacidad/privacidad';
+import { Ausencias } from './pages/ausencias/ausencias';
+import { Incidencias } from './pages/incidencias/incidencias';
+import { Contacto } from './pages/contacto/contacto';
+import { Fichaje } from './pages/fichaje/fichaje';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'registro', component: Registro },
+  { path: 'fichaje', component: Fichaje },
   { path: 'privacidad', component: Privacidad },
   { path: 'contacto', component: Contacto },
+  { path: 'ausencias', component: Ausencias },
+  { path: 'incidencias', component: Incidencias },
+  { path: 'logout', redirectTo: 'login' },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: '' }
 ];

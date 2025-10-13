@@ -1,0 +1,79 @@
+  <div class="registro-container">
+    <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="nombre">Nombre</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El nombre no es válido!">
+          <input nz-input formControlName="nombre" id="nombre" />
+        </nz-form-control>
+      </nz-form-item>
+            <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="apellidos">Apellidos</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Los apellidos no son válidos!">
+          <input nz-input formControlName="apellidos" id="apellidos" />
+        </nz-form-control>
+      </nz-form-item>
+            <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="dni">DNI</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El DNI no es válido!">
+          <input nz-input formControlName="dni" id="dni" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="email">E-mail</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El correo electrónico no es válido!">
+          <input nz-input formControlName="email" id="email" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="password" nzRequired>Contraseña</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Por favor ingresa tu contraseña!">
+          <input nz-input type="password" id="password" formControlName="password" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="checkPassword" nzRequired>Confirmar Contraseña</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" [nzErrorTip]="errorTpl">
+          <input nz-input type="password" formControlName="checkPassword" id="checkPassword" />
+          <ng-template #errorTpl let-control>
+            @if (control.errors?.['required']) {
+              ¡Por favor confirma tu contraseña!
+            }
+            @if (control.errors?.['confirm']) {
+              ¡Las dos contraseñas que ingresaste son inconsistentes!
+            }
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="phoneNumber" nzRequired>Teléfono</nz-form-label>
+          <nz-form-control
+            [nzSm]="14"
+            [nzXs]="24"
+            [nzValidateStatus]="validateForm.controls['phoneNumber']"
+            nzErrorTip="Por favor introduce tu teléfono"
+          >
+            <nz-input-group nzAddOnBefore="+34">
+              <input
+                nz-input
+                id="phoneNumber"
+                formControlName="phoneNumber"
+                placeholder="Número de teléfono"
+              />
+            </nz-input-group>
+          </nz-form-control>
+
+      </nz-form-item>
+            <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="rol">Rol</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El rol no es válido!">
+          <input nz-input formControlName="rol" id="rol" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nz-row class="register-area">
+        <nz-form-control [nzSpan]="14" [nzOffset]="6">
+          <button nz-button nzType="primary">Registrar</button>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>

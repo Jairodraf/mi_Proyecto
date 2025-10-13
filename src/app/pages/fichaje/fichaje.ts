@@ -2,9 +2,10 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-fichaje',
+  standalone: true,
   imports: [],
   templateUrl: './fichaje.html',
-  styleUrl: './fichaje.scss'
+  styleUrls: ['./fichaje.scss']
 })
 export class Fichaje {
 

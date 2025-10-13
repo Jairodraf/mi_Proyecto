@@ -1,0 +1,54 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+        <h1 class="text-light display-4 text-center" style="font-size:30px">Registro Entrada / Salida</h1>
+      </div>
+
+      <!-- Tarjeta principal -->
+      <div class="col-md-10 col-lg-8">
+        <div class="card mt-5 shadow-sm">
+          <div class="card-body text-center">
+            <!-- Hora actual -->
+            <div class="mb-3">
+              <input type="text" id="horaActual" class="form-control text-center fs-3" readonly>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-center gap-3 mb-3">
+              <button id="btnEntrada" class="btn btn-success btn-lg" onclick="fichar('ENTRADA')">Entrada</button>
+              <button id="btnSalida"  class="btn btn-danger  btn-lg" onclick="fichar('SALIDA')" disabled>Salida</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Último fichaje -->
+        <div class="card mt-4 shadow-sm">
+          <div class="card-header bg-primary text-white">Último fichaje realizado</div>
+          <div class="card-body d-flex flex-wrap align-items-end gap-3">
+            <div class="me-2">
+              <div class="small text-muted">Tipo</div>
+              <span id="ultimo-tipo" class="fw-bold">—</span>
+            </div>
+            <div>
+              <label for="ultimo-fecha" class="form-label mb-1 small">Fecha</label>
+              <input id="ultimo-fecha" type="text" class="form-control form-control-sm" readonly>
+            </div>
+            <div>
+              <label for="ultimo-hora" class="form-label mb-1 small">Hora</label>
+              <input id="ultimo-hora" type="text" class="form-control form-control-sm" readonly>
+            </div>
+          </div>
+        </div>
+
+        <!-- Incidencias (si quieres mantenerlo después lo conectamos a backend) -->
+        <div class="card mt-4 shadow-sm">
+          <div class="card-header bg-danger text-white">Incidencias</div>
+          <div class="card-body">
+            <textarea id="incidencia" class="form-control mb-3" rows="4" placeholder="Describe la incidencia..."></textarea>
+            <button id="btn-incidencia" class="btn btn-outline-danger">Registrar Incidencia (demo)</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>

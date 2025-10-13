@@ -1,0 +1,41 @@
+header {
+  background-color: black;
+  padding: 20px;
+}
+header nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+header .logo {
+  flex: 0 0 auto;}
+/* Logo */
+header .logo h2{
+  color: white;
+  margin: 0;
+  font-size: 24px;
+  white-space: nowrap;
+}
+header .logo a {
+  color: white;
+  text-decoration: none;
+}
+.header-links {
+  display: flex;
+  gap: 10px;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 200px;
+}
+.header-links a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 20px;
+}
+.header-links a:hover {
+  background-color: white;
+  color: black;
+  border-radius: 20px;
+}
+
