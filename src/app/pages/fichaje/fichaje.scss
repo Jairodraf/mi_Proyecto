@@ -1,0 +1,279 @@
+/* Fichaje page styles (clean, responsive) */
+
+.container {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* Ensure fichaje page visually uses the app background and occupies full area */
+.container {
+  background-color: transparent; /* inherit the global background */
+  /* Remove big min-height so the page height adapts to content; avoids large empty area when no results */
+  display: block;
+}
+
+/* Ensure any Bootstrap `bg-dark` used inside this component uses the app background instead */
+:host .bg-dark,
+:host body.bg-dark {
+  background-color: var(--app-bg) !important;
+  background-image: none !important;
+}
+
+/* Ensure the small control cards on the right match the height of the left controls area */
+.control-card {
+  /* Use unified top-cards height when available */
+  min-height: var(--top-cards-height, 140px);
+  height: var(--top-cards-height, auto);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* prevent children from escaping the card */
+}
+
+/* Make the results card take remaining vertical space */
+.flex-grow-1 {
+  display: flex;
+  flex-direction: column;
+}
+
+.card.mt-3.shadow-sm.flex-grow-1 .card-body {
+  overflow: auto;
+}
+
+/* Results list layout: ensure incidence column stays to the right */
+.list-group-item > div:last-child {
+  min-width: 120px;
+  max-width: 220px;
+  word-break: break-word;
+}
+
+/* Left controls should also pick up the unified height */
+.left-controls {
+  min-height: var(--top-cards-height, 140px);
+  height: var(--top-cards-height, auto);
+  overflow: hidden;
+}
+
+/* Compact last fichaje row: Tipo and Fecha side-by-side */
+.last-row > div {
+  min-width: 120px;
+}
+
+/* Ensure the cards below (incidence/results) keep proportional width to the top cards */
+.card[style*="width:50%"] {
+  /* keep width proportional but allow shrink/expand gracefully */
+  width: 50%;
+  box-sizing: border-box;
+}
+
+/* Layout tweaks: make the two top cards together take ~50% width and centered */
+/* Proportional top-cards wrapper: use flex to ensure both cards together occupy ~50% and scale */
+.row.gx-3.justify-content-center {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  /* Each top card receives a flexible basis so both together equal about 50% of the viewport */
+    /* Make the top two cards collectively occupy ~60% of the viewport and stay centered */
+    #leftControlsCard, #filterCard {
+      flex: 0 1 auto;
+      width: 30%; /* each 30% => combined 60% */
+      min-width: 280px;
+      max-width: 36rem;
+    }
+
+  /* Ensure incidence/results cards match the combined width (use calc on the two bases) */
+  .card[style*="width:50%"], .centered-width {
+    /* Centered cards follow the combined top cards width (approx 60% total) */
+    width: calc(60vw - 1rem);
+    max-width: 1100px;
+    min-width: 560px;
+  }
+}
+
+/* Force exact 50/50 columns for top-row on medium+ screens so Filter is to the right of Buttons */
+@media (min-width: 768px) {
+  .top-row > .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  #leftControlsCard, #filterCard {
+    flex: 0 1 100%;
+    max-width: 100%;
+  }
+  .card[style*="width:50%"] {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+/* New: stable proportional wrapper for top cards */
+.top-cards {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* Top row with left and right aligned cards */
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Center the two top cards together on larger screens while preserving 50/50 column behavior */
+@media (min-width: 768px) {
+  .top-row {
+    justify-content: center; /* center the group */
+  }
+  .top-row > .col-md-6:first-child {
+    margin-right: 1rem; /* small gap between the two main top columns when centered */
+  }
+  .top-row > .col-md-6 {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 0 0 45%; /* make each column take ~45% so combined they are centered and not full width */
+    max-width: 45%;
+  }
+}
+
+/* When there isn't enough width, stack the columns vertically */
+@media (max-width: 767.98px) {
+  .top-row {
+    justify-content: center;
+  }
+  .top-row > .col-md-6 {
+    flex: 0 1 100%;
+    max-width: 100%;
+  }
+}
+
+/* Ensure each top column stacks its cards from the top and stretches children to full width */
+.top-row > .col-md-6 {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Reset small top margins for cards inside the top row so top edges align exactly */
+.top-row > .col-md-6 > .card {
+  margin-top: 0 !important;
+}
+
+/* Make sure right column contents (filter, registrar, resultados) share the same width and align to the column's left edge */
+.top-row > .col-md-6:last-child > .card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Centered width class used by incidence/results cards so they follow the combined width of top cards */
+.centered-width {
+  width: calc(2 * 22vw + 1rem); /* base proportional width */
+  max-width: 900px;
+  min-width: 520px; /* at least the two cards' combined readable width */
+  box-sizing: border-box;
+  transition: width 300ms ease, height 300ms ease, max-width 300ms ease;
+}
+
+@media (max-width: 1200px) {
+  .centered-width { width: calc(2 * 30vw + 1rem); }
+}
+
+/* prevent cards from shrinking too much on narrow but tall screens */
+@media (max-width: 992px) {
+  #leftControlsCard, #filterCard { width: 48%; min-width: 240px; }
+  .centered-width { width: calc(100% - 2rem); min-width: 320px; }
+}
+
+@media (max-width: 767.98px) {
+  .centered-width { width: 100% !important; }
+}
+
+/* Reduce empty space at page bottom when there are no results */
+.container-fluid.py-4 {
+  padding-bottom: 1rem;
+}
+
+.card.shadow-sm[style*="width:50%"] .card-body {
+  /* let results shrink to content and avoid large empty area */
+  max-height: 60vh; /* clamp vertical growth */
+  overflow: auto;
+}
+
+/* Make sure cards do not grow vertically beyond viewport on wide screens */
+.card { transition: width 300ms ease, height 300ms ease; }
+
+/* Small devices: fall back to full width */
+@media (max-width: 767.98px) {
+  .card[style*="width:50%"] {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+/* Make full-height helper respect the app background inside this component */
+:host .vh-100 {
+  min-height: 100vh;
+  background-color: var(--app-bg) !important;
+}
+
+/* Make full-height helper respect the app background inside this component */
+:host .vh-100 {
+  min-height: 100vh;
+  background-color: var(--app-bg) !important;
+}
+
+/* Ensure cards inside a left column stack fill the available column width (avoid unwanted centering) */
+.col-md-6.d-flex.flex-column > .card {
+  width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+/* Mobile-centered variant used in template - treat it as full width inside its column */
+.centered-width-mobile {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* Results: horizontal row layout so fields appear left-to-right and fit inside the card */
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+}
+.result-col {
+  flex: 0 1 auto;
+  min-width: 0; /* allow flex children to shrink */
+}
+.result-col .result-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.result-start, .result-end {
+  width: 100px;
+}
+.result-duration {
+  width: 120px;
+}
+.result-incidence {
+  flex: 1 1 220px; /* incidence can grow and takes remaining space, but has sensible min */
+  min-width: 120px;
+  max-width: 420px;
+}
+
+@media (max-width: 767.98px) {
+  .result-row { flex-direction: column; align-items: stretch; }
+  .result-start, .result-end, .result-duration, .result-incidence { width: 100%; }
+}

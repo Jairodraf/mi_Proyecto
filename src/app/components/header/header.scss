@@ -1,41 +1,53 @@
 header {
-  background-color: black;
-  padding: 20px;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--app-header-height);
+  background-color: rgba(255,255,255,0.85); /* semi-transparent to contrast with blue bg */
+  backdrop-filter: blur(4px);
+  padding: 12px 20px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  z-index: 1060;
 }
-header nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-}
+
 header .logo {
-  flex: 0 0 auto;}
+  flex: 0 0 auto;
+}
+
 /* Logo */
 header .logo h2{
-  color: white;
+  color: #001529;
   margin: 0;
   font-size: 24px;
   white-space: nowrap;
 }
+
 header .logo a {
-  color: white;
+  color: #001529;
   text-decoration: none;
 }
-.header-links {
+
+header .header-links {
   display: flex;
   gap: 10px;
   flex: 1 1 auto;
   justify-content: flex-end;
   min-width: 200px;
 }
-.header-links a {
-  color: white;
+
+header .header-links a {
+  color: #001529;
   text-decoration: none;
   padding: 10px 20px;
 }
-.header-links a:hover {
-  background-color: white;
-  color: black;
+
+header .header-links a:hover {
+  background-color: rgba(255,255,255,0.85);
+  color: #001529;
   border-radius: 20px;
 }
+
 

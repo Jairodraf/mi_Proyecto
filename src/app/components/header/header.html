@@ -6,12 +6,19 @@
       </a>
     </div>
     <div class="header-links">
-    <a routerLink="/">Inicio</a>
-    <a routerLink="/registro">Registro</a>
-    <a routerLink="/fichaje">Fichaje</a>
-    <a routerLink="/ausencias">Ausencias</a>
-    <a routerLink="/incidencias">Incidencias</a>
-    <a routerLink="/logout">Cerrar sesión</a>
+      <a routerLink="/">Inicio</a>
+      <!-- Show Registro only for admins -->
+      <a *ngIf="(isAdmin$ | async)" routerLink="/registro">Registro</a>
+      <a routerLink="/fichaje">Fichaje</a>
+      <a routerLink="/ausencias">Ausencias</a>
+      <a routerLink="/incidencias">Incidencias</a>
+      <a routerLink="/logout">Cerrar sesión</a>
+
+      <!-- Role simulation controls (for development/demo) -->
+      <div class="role-controls" style="display:inline-block; margin-left:1rem;">
+        <button type="button" (click)="loginAdmin()" title="Iniciar como administrador">Admin</button>
+        <button type="button" (click)="loginUser()" title="Iniciar como usuario">User</button>
+      </div>
     </div>
   </nav>
 </header>

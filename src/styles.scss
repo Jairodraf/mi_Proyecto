@@ -6,3 +6,30 @@
 img {
   width: 100%;
 }
+
+// App color variables
+// Update: stronger light-blue tone for app background
+$blue-100: #dbeeff; // updated light blue
+
+/* Use Bootstrap CSS variable if available, otherwise fall back to $blue-100 */
+:root {
+  --app-bg: var(--bs-blue-100, #{$blue-100});
+  --app-footer-height: 64px; /* space reserved for fixed footer */
+  --app-header-height: 72px; /* reserved space for fixed header */
+}
+
+/* Apply background to the whole app */
+html, body, app-root {
+  height: 100%;
+  background-color: var(--app-bg);
+}
+
+/* Ensure the main app container expands to full height so background covers viewport */
+app-root {
+  display: block;
+  min-height: 100vh;
+  /* prevent fixed footer from covering content */
+  padding-bottom: var(--app-footer-height);
+  /* prevent fixed header from covering content */
+  padding-top: var(--app-header-height);
+}

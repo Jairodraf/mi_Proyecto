@@ -37,8 +37,10 @@
 
             "styles": [
               "src/theme.less",
-              "src/styles.scss"
-            ]
+              "src/styles.scss",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css"
+            ],
+            "scripts": ["node_modules/bootstrap/dist/js/bootstrap.min.js"]
           },
           "configurations": {
             "production": {

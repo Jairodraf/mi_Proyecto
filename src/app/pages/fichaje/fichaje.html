@@ -1,54 +1,112 @@
-<div class="container py-4">
-    <div class="row justify-content-center">
-      <div class="col-md-12">
-        <h1 class="text-light display-4 text-center" style="font-size:30px">Registro Entrada / Salida</h1>
+<div class="bg-dark d-flex align-items-start justify-content-center vh-100">
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12 mb-3">
+        <h1 class="text-light display-4 text-center" style="font-size:30px">
+          Registro Entrada / Salida
+        </h1>
       </div>
 
-      <!-- Tarjeta principal -->
-      <div class="col-md-10 col-lg-8">
-        <div class="card mt-5 shadow-sm">
-          <div class="card-body text-center">
-            <!-- Hora actual -->
-            <div class="mb-3">
-              <input type="text" id="horaActual" class="form-control text-center fs-3" readonly>
+      <div class="col-12">
+        <div class="row gx-3 justify-content-center align-items-start">
+          <!-- Columna izquierda -->
+          <div class="col-12 col-md-3 d-flex flex-column">
+            <div id="leftControlsCard" class="card mt-1 shadow-sm left-controls h-100">
+              <div class="card-body text-center">
+                <div class="mb-3">
+                  <input type="text" class="form-control text-center fs-3" [value]="currentTime" readonly>
+                </div>
+                <div class="d-flex justify-content-center gap-3 mb-3">
+                  <button id="btnEntrada" class="btn btn-success btn-lg" (click)="fichar('ENTRADA')" [disabled]="entradaDisabled">Entrada</button>
+                  <button id="btnSalida" class="btn btn-danger btn-lg" (click)="fichar('SALIDA')" [disabled]="salidaDisabled">Salida</button>
+                </div>
+                <div class="mt-3">
+                  <div class="card">
+                    <div class="card-header bg-primary text-white">Último fichaje</div>
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center last-row">
+                        <div class="text-center">
+                          <div class="small text-muted">Tipo</div>
+                          <div class="fw-bold">{{ lastType }}</div>
+                        </div>
+                        <div class="text-center">
+                          <div class="small text-muted">Fecha</div>
+                          <div class="fw-bold">{{ lastDate }}</div>
+                        </div>
+                      </div>
+                      <div class="text-center mt-2 small text-muted">Hora: {{ lastTime }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <!-- Botones -->
-            <div class="d-flex justify-content-center gap-3 mb-3">
-              <button id="btnEntrada" class="btn btn-success btn-lg" onclick="fichar('ENTRADA')">Entrada</button>
-              <button id="btnSalida"  class="btn btn-danger  btn-lg" onclick="fichar('SALIDA')" disabled>Salida</button>
+          <!-- Columna derecha (solo filtro) -->
+          <div class="col-12 col-md-3 d-flex flex-column">
+            <div id="filterCard" class="card mt-1 shadow-sm control-card h-100">
+              <div class="card-header">Filtrar</div>
+              <div class="card-body">
+                <label class="form-label small">Fecha inicio</label>
+                <input type="date" class="form-control mb-2" [(ngModel)]="filterStart">
+                <label class="form-label small">Fecha fin</label>
+                <input type="date" class="form-control mb-2" [(ngModel)]="filterEnd">
+                <button class="btn btn-primary btn-sm w-100 mb-2" (click)="applyFilter()">Aplicar filtro</button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Último fichaje -->
-        <div class="card mt-4 shadow-sm">
-          <div class="card-header bg-primary text-white">Último fichaje realizado</div>
-          <div class="card-body d-flex flex-wrap align-items-end gap-3">
-            <div class="me-2">
-              <div class="small text-muted">Tipo</div>
-              <span id="ultimo-tipo" class="fw-bold">—</span>
+      <!-- Registrar incidencia + Resultados: centered, same width as the two top cards together (col-md-6 centered) -->
+      <div class="col-12 mt-3">
+        <div class="row">
+          <div class="col-12 col-md-6 offset-md-3 d-flex flex-column">
+            <div class="card">
+              <div class="card-header bg-danger text-white">Registrar incidencia</div>
+              <div class="card-body d-flex flex-column">
+                <textarea class="form-control mb-3" rows="3" [(ngModel)]="incidenceText" placeholder="Describe la incidencia (se registrará inmediatamente)"></textarea>
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-outline-danger" (click)="registerIncidentNow()">Registrar incidencia</button>
+                </div>
+              </div>
             </div>
-            <div>
-              <label for="ultimo-fecha" class="form-label mb-1 small">Fecha</label>
-              <input id="ultimo-fecha" type="text" class="form-control form-control-sm" readonly>
-            </div>
-            <div>
-              <label for="ultimo-hora" class="form-label mb-1 small">Hora</label>
-              <input id="ultimo-hora" type="text" class="form-control form-control-sm" readonly>
+
+            <div class="card mt-3">
+              <div class="card-header">Resultados</div>
+              <div class="card-body">
+                <div [hidden]="filteredGroups.length !== 0" class="text-muted">No hay resultados para el filtro seleccionado.</div>
+                <div *ngFor="let g of filteredGroups" class="mb-3">
+                  <div class="fw-bold">{{ g.date }}</div>
+                  <div [hidden]="!g.dayIncidence" class="small text-danger">Incidencias del día: {{ g.dayIncidence }}</div>
+                  <ul class="list-group mb-2">
+                    <li *ngFor="let p of g.pairs" class="list-group-item result-row">
+                      <div class="result-col result-start">
+                        <div class="small text-muted">Hora inicio</div>
+                        <div class="result-value">{{ p.entrada.time }}</div>
+                      </div>
+                      <div class="result-col result-end">
+                        <div class="small text-muted">Hora fin</div>
+                        <div class="result-value">{{ p.salida.time }}</div>
+                      </div>
+                      <div class="result-col result-duration">
+                        <div class="small text-muted">Duración</div>
+                        <div class="result-value">{{ msToHhMm(p.durationMs) }}</div>
+                      </div>
+                      <div class="result-col result-incidence text-end">
+                        <div class="small text-muted">Incidencia</div>
+                        <div class="result-value">{{ p.entrada.incidence || '-' }}</div>
+                      </div>
+                    </li>
+                  </ul>
+                  <div class="text-end small">Total día: {{ msToHhMm(g.totalMs) }}</div>
+                </div>
+                <div [hidden]="filteredGroups.length === 0" class="mt-2 fw-bold">Total filtro: {{ msToHhMm(filteredTotalMs) }}</div>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- Incidencias (si quieres mantenerlo después lo conectamos a backend) -->
-        <div class="card mt-4 shadow-sm">
-          <div class="card-header bg-danger text-white">Incidencias</div>
-          <div class="card-body">
-            <textarea id="incidencia" class="form-control mb-3" rows="4" placeholder="Describe la incidencia..."></textarea>
-            <button id="btn-incidencia" class="btn btn-outline-danger">Registrar Incidencia (demo)</button>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
+</div>
