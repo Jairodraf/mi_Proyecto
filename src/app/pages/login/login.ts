@@ -18,8 +18,7 @@ export class Login {
   constructor(private fb: FormBuilder) {
     this.validateForm = this.fb.group({
       username: [null, [Validators.required]],
-      password: [null, [Validators.required]],
-      remember: [true]
+      password: [null, [Validators.required]]
     });
   }
 

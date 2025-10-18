@@ -1,7 +1,6 @@
 import { Component, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule, NgForOf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-scm-history-item:d%3A%5COneDrive%20-%20Educacyl%5CCFGS%20DAM%5CPROYECTO%20DAM%5CMiProyecto%5Cmi_Proyecto?%7B%22repositoryId%22%3A%22scm0%22%2C%22historyItemId%22%3A%22e1dc6972996b3244e27d3a3e89f318ae6f93650c%22%2C%22historyItemParentId%22%3A%220b39f9b37da87cb0984b828254d10c7e9792bb52%22%2C%22historyItemDisplayId%22%3A%22e1dc697%22%7D
 @Component({
   selector: 'app-fichaje',
   standalone: true,

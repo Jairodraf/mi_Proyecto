@@ -3,7 +3,6 @@ import { Login } from './pages/login/login';
 import { Registro } from './pages/registro/registro';
 import { Privacidad } from './pages/privacidad/privacidad';
 import { Ausencias } from './pages/ausencias/ausencias';
-import { Incidencias } from './pages/incidencias/incidencias';
 import { Contacto } from './pages/contacto/contacto';
 import { Fichaje } from './pages/fichaje/fichaje';
 
@@ -14,8 +13,6 @@ export const routes: Routes = [
   { path: 'privacidad', component: Privacidad },
   { path: 'contacto', component: Contacto },
   { path: 'ausencias', component: Ausencias },
-  { path: 'incidencias', component: Incidencias },
-
   { path: 'contacto.html', redirectTo: 'contacto', pathMatch: 'full' },
 
 

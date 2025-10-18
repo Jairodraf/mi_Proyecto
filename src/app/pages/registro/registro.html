@@ -1,46 +1,65 @@
+  <div class="col-12 mb-3">
+    <h1 class="display-4 text-center" style="color: #001529; font-size:30px;">
+      Registro Entrada / Salida
+    </h1>
+  </div>
+
+
   <div class="registro-container">
-    <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
+    <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="nombre">Nombre</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El nombre no es válido!">
-          <input nz-input formControlName="nombre" id="nombre" />
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El nombre debe tener al menos 3 caracteres!">
+          <input nz-input formControlName="nombre" id="nombre" autocomplete="off"/>
+          @if (validateForm.get('nombre')?.errors?.['required']) {
+            <span> El nombre no puede quedar vacío</span>
+          }
         </nz-form-control>
       </nz-form-item>
             <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="apellidos">Apellidos</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Los apellidos no son válidos!">
-          <input nz-input formControlName="apellidos" id="apellidos" />
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Los apellidos deben tener al menos 3 caracteres!">
+          <input nz-input formControlName="apellidos" id="apellidos" autocomplete="off"/>
+          @if (validateForm.get('apellidos')?.errors?.['required']) {
+            <span> Los apellidos no pueden quedar vacíos</span>
+          }
         </nz-form-control>
       </nz-form-item>
             <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="dni">DNI</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El DNI no es válido!">
-          <input nz-input formControlName="dni" id="dni" />
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El DNI debe tener 9 caracteres!">
+          <input nz-input formControlName="dni" id="dni" autocomplete="off"/>
+          @if (validateForm.get('dni')?.errors?.['required']) {
+            <span> El DNI no puede quedar vacío</span>
+          }
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="email">E-mail</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El correo electrónico no es válido!">
-          <input nz-input formControlName="email" id="email" />
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El correo electrónico no es válido! (micorreo@example.com)">
+          <input nz-input formControlName="email" id="email" autocomplete="off"/>
+          @if (validateForm.get('email')?.errors?.['required']) {
+            <span> El correo electrónico no puede quedar vacío</span>
+          }
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="password" nzRequired>Contraseña</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Por favor ingresa tu contraseña!">
-          <input nz-input type="password" id="password" formControlName="password" />
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial!">
+          <input nz-input type="password" id="password" formControlName="password" autocomplete="new-password"/>
+        @if (validateForm.get('checkPassword')?.errors?.['required']) {
+          <span> La contraseña no puede quedar vacía</span>
+        }
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="checkPassword" nzRequired>Confirmar Contraseña</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" [nzErrorTip]="errorTpl">
-          <input nz-input type="password" formControlName="checkPassword" id="checkPassword" />
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="checkPassword" nzRequired>Repetir Contraseña</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El password no coincide!">
+          <input nz-input type="password" formControlName="checkPassword" id="checkPassword" autocomplete="new-password"/>
+          @if (validateForm.get('checkPassword')?.errors?.['required']) {
+            <span> La contraseña no puede quedar vacía</span>
+          }
           <ng-template #errorTpl let-control>
-            @if (control.errors?.['required']) {
-              ¡Por favor confirma tu contraseña!
-            }
-            @if (control.errors?.['confirm']) {
-              ¡Las dos contraseñas que ingresaste son inconsistentes!
-            }
           </ng-template>
         </nz-form-control>
       </nz-form-item>
@@ -58,7 +77,10 @@
                 id="phoneNumber"
                 formControlName="phoneNumber"
                 placeholder="Número de teléfono"
-              />
+              autocomplete="off"/>
+            @if (validateForm.get('phoneNumber')?.errors?.['required']) {
+              <span> El número de teléfono no puede quedar vacío</span>
+            }
             </nz-input-group>
           </nz-form-control>
 
@@ -66,7 +88,10 @@
             <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="rol">Rol</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El rol no es válido!">
-          <input nz-input formControlName="rol" id="rol" />
+          <input nz-input formControlName="rol" id="rol" autocomplete="off"/>
+          @if (validateForm.get('rol')?.errors?.['required']) {
+            <span> El rol no puede quedar vacío</span>
+          }
         </nz-form-control>
       </nz-form-item>
 

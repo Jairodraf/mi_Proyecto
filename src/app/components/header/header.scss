@@ -3,7 +3,8 @@ header {
   left: 0;
   right: 0;
   top: 0;
-  height: var(--app-header-height);
+  //height: var(--app-header-height);
+  height: auto;
   background-color: rgba(255,255,255,0.85); /* semi-transparent to contrast with blue bg */
   backdrop-filter: blur(4px);
   padding: 12px 20px;
