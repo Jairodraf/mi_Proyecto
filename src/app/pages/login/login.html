@@ -1,46 +1,58 @@
-    <!-- Encabezado de bienvenida -->
+<!-- Encabezado de bienvenida -->
+<div class="col-12 mb-3 text-center">
+  <h1 style="color: #001529; font-size: 30px;">¡Le damos la bienvenida!</h1>
+  <h3 style="color: #001529; font-size: 20px;">Por favor, inicie sesión para continuar.</h3>
+</div>
 
-    <div class="col-12 mb-3">
-    <h1 class="display-4 text-center" style="color: #001529; font-size:30px;">
-      ¡Le damos la bienvenida!
-    </h1>
-    <h3 class="text-center" style="color: #001529; font-size:20px;">
-      Por favor, inicie sesión para continuar.
-    </h3>
-  </div>
-
-
-  <!-- Formulario de inicio de sesión -->
-  <div class="login-container">
-    <form nz-form [formGroup]="validateForm" class="login-form" (ngSubmit)="submitForm()">
-      <nz-form-item>
-        <nz-form-control nzErrorTip="Por favor ingrese su nombre de usuario!">
+<!-- Contenedor principal -->
+<div class="login-container">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <!-- Formulario de inicio de sesión -->
+      <form
+        nz-form
+        [formGroup]="validateForm"
+        class="login-form"
+        (ngSubmit)="submitForm()"
+      >
+        <nz-form-item>
           <nz-form-label>Correo electrónico</nz-form-label>
-          <nz-input-group nzPrefixIcon="user">
-            <input type="text" nz-input formControlName="username" placeholder="Usuario" />
-          </nz-input-group>
-          <!-- Si el nombre no es válido y cuando se interactúa con el campo -->
-          @if (validateForm.get('username')?.invalid && validateForm.get('username')?.touched) {
-            <span> El nombre de usuario no puede quedar vacío</span>
-          }
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-control nzErrorTip="Por favor ingrese su contraseña!">
+          <nz-form-control nzErrorTip="Por favor ingrese su nombre de usuario!">
+            <nz-input-group nzPrefixIcon="user">
+              <input
+                type="text"
+                nz-input
+                formControlName="username"
+                placeholder="Usuario"
+              />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
           <nz-form-label>Contraseña</nz-form-label>
-          <nz-input-group nzPrefixIcon="lock">
-            <input type="password" nz-input formControlName="password" placeholder="Contraseña" autocomplete="new-password"/>
-          </nz-input-group>
-          <!-- Si la contraseña no es válida y cuando se interactúa con el campo -->
-          @if (validateForm.get('password')?.invalid && validateForm.get('password')?.touched) {
-            <span> La contraseña no puede quedar vacía</span>
-          }
-        </nz-form-control>
-      </nz-form-item>
-      <div nz-row class="login-form-margin">
-        <div nz-col [nzSpan]="12">
-        </div>
-      </div>
-      <button nz-button class="login-form-button login-form-margin" routerLink="/fichaje" [nzType]="'primary'">Ingresar</button>
-    </form>
+          <nz-form-control nzErrorTip="Por favor ingrese su contraseña!">
+            <nz-input-group nzPrefixIcon="lock">
+              <input
+                type="password"
+                nz-input
+                formControlName="password"
+                placeholder="Contraseña"
+                autocomplete="new-password"
+              />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item>
+
+        <button
+          nz-button
+          class="login-form-button"
+          [nzType]="'primary'"
+          routerLink="/fichaje"
+        >
+          Ingresar
+        </button>
+      </form>
+    </div>
   </div>
+</div>

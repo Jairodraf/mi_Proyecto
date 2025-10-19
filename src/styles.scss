@@ -19,13 +19,19 @@ $blue-100: #dbeeff; // updated light blue
 }
 
 /* Apply background to the whole app */
-html, body, app-root {
+html {
   height: 100%;
+  background: transparent;
+}
+
+body {
   background-color: var(--app-bg);
 }
 
 /* Ensure the main app container expands to full height so background covers viewport */
-app-root {
+body, app-root {
+  height: 100%;
+  background: transparent;
   display: block;
   min-height: 100vh;
   /* prevent fixed footer from covering content */
@@ -33,3 +39,29 @@ app-root {
   /* prevent fixed header from covering content */
   padding-top: var(--app-header-height);
 }
+
+body {
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/Logo_FichajeApp.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover; /* ajusta el tamaño del logo */
+  opacity: 0.1; /* controla el nivel de transparencia (0.05 = muy sutil) */
+  z-index: 0; /* detrás de todo el contenido */
+  pointer-events: none; /* no bloquea clics */
+  mix-blend-mode: normal;
+}
+
+body {
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
