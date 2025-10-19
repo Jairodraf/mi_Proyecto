@@ -1,29 +1,32 @@
-<h1 class="lead text-light" style="text-align: center;">Contacto</h1>
+  <!-- Encabezado de registro -->
+  <div class="col-12 mb-3">
+    <h1 class="display-4 text-center" style="color: #001529; font-size:30px;">
+      Contacto
+    </h1>
+  </div>
 
-        <!-- Mensaje de éxito opcional (puedes mostrarlo tras enviar) -->
-        <!-- <div class="alert alert-success" role="alert">Gracias por tu mensaje. Te responderemos pronto.</div> -->
-
+        <!-- Formulario de contacto -->
         <div class="card shadow-sm">
           <div class="card-body">
             <form action="ContactoServlet" method="post" class="needs-validation" novalidate>
               <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre</label>
                 <input type="text" class="form-control" style="margin-left: 10px;" id="nombre" name="nombre"
-                       autocomplete="name" required>
+                       autocomplete="off" required>
                 <div class="invalid-feedback">Introduce tu nombre.</div>
               </div>
 
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input type="email" class="form-control" style="margin-left: 10px;" id="email" name="email"
-                       autocomplete="email" required>
+                       autocomplete="off" required>
                 <div class="invalid-feedback">Introduce un email válido.</div>
               </div>
 
               <div class="mb-3">
                 <label for="mensaje" class="form-label">Mensaje</label>
                 <textarea class="form-control" style="margin-left: 10px;" id="mensaje" name="mensaje" rows="10" style="width: 100%;"
-                         minlength="10" required></textarea>
+                         minlength="10" required autocomplete="off"></textarea>
                 <div class="invalid-feedback">El mensaje debe tener al menos 10 caracteres.</div>
               </div>
 

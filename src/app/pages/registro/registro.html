@@ -1,16 +1,18 @@
+  <!-- Encabezado de registro -->
   <div class="col-12 mb-3">
     <h1 class="display-4 text-center" style="color: #001529; font-size:30px;">
       Registro Entrada / Salida
     </h1>
   </div>
 
-
+  <!-- Formulario de registro -->
   <div class="registro-container">
     <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="nombre">Nombre</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El nombre debe tener al menos 3 caracteres!">
           <input nz-input formControlName="nombre" id="nombre" autocomplete="off"/>
+          <!-- Si el campo está vacío -->
           @if (validateForm.get('nombre')?.errors?.['required']) {
             <span> El nombre no puede quedar vacío</span>
           }
@@ -20,6 +22,7 @@
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="apellidos">Apellidos</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Los apellidos deben tener al menos 3 caracteres!">
           <input nz-input formControlName="apellidos" id="apellidos" autocomplete="off"/>
+          <!-- Si el campo está vacío -->
           @if (validateForm.get('apellidos')?.errors?.['required']) {
             <span> Los apellidos no pueden quedar vacíos</span>
           }
@@ -29,6 +32,7 @@
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="dni">DNI</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El DNI debe tener 9 caracteres!">
           <input nz-input formControlName="dni" id="dni" autocomplete="off"/>
+          <!-- Si el campo está vacío -->
           @if (validateForm.get('dni')?.errors?.['required']) {
             <span> El DNI no puede quedar vacío</span>
           }
@@ -38,6 +42,7 @@
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="email">E-mail</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El correo electrónico no es válido! (micorreo@example.com)">
           <input nz-input formControlName="email" id="email" autocomplete="off"/>
+          <!-- Si el campo está vacío -->
           @if (validateForm.get('email')?.errors?.['required']) {
             <span> El correo electrónico no puede quedar vacío</span>
           }
@@ -46,16 +51,20 @@
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="password" nzRequired>Contraseña</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial!">
+          <!-- autocompletado new-password para que no se guarde en el historial -->
           <input nz-input type="password" id="password" formControlName="password" autocomplete="new-password"/>
-        @if (validateForm.get('checkPassword')?.errors?.['required']) {
-          <span> La contraseña no puede quedar vacía</span>
-        }
+          <!-- Si el campo está vacío -->
+          @if (validateForm.get('password')?.invalid && validateForm.get('password')?.touched) {
+            <span> La contraseña no puede quedar vacía</span>
+          }
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="checkPassword" nzRequired>Repetir Contraseña</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El password no coincide!">
+          <!-- autocompletado new-password para que no se guarde en el historial -->
           <input nz-input type="password" formControlName="checkPassword" id="checkPassword" autocomplete="new-password"/>
+          <!-- Si el campo está vacío -->
           @if (validateForm.get('checkPassword')?.errors?.['required']) {
             <span> La contraseña no puede quedar vacía</span>
           }
@@ -78,6 +87,7 @@
                 formControlName="phoneNumber"
                 placeholder="Número de teléfono"
               autocomplete="off"/>
+            <!-- Si el campo está vacío -->
             @if (validateForm.get('phoneNumber')?.errors?.['required']) {
               <span> El número de teléfono no puede quedar vacío</span>
             }
@@ -89,6 +99,7 @@
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="rol">Rol</nz-form-label>
         <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El rol no es válido!">
           <input nz-input formControlName="rol" id="rol" autocomplete="off"/>
+          <!-- Si el campo está vacío -->
           @if (validateForm.get('rol')?.errors?.['required']) {
             <span> El rol no puede quedar vacío</span>
           }

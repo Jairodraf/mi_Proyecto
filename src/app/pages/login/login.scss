@@ -1,13 +1,19 @@
+h1 {
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
+
 .login-container {
+  margin-top: 80px;
   display: flex;
   justify-content: center;  /* horizontal */
   align-items: center;      /* vertical */
-  height: 100vh;
+  height: 20vh;
 }
 
 .login-form {
   max-width: 500px;
-  padding: 40px;
+  padding: 20px;
 }
 
 .login-form-margin {

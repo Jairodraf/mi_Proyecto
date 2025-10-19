@@ -3,20 +3,24 @@ import { RouterModule, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
+  standalone: true,
   imports: [CommonModule, RouterModule, RouterLink],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })
-
 export class Header {
-  /** Exposed observable used by the template with the async pipe */
   isAdmin$: Observable<boolean>;
 
-  constructor(private auth: AuthService) {
+  constructor(private auth: AuthService, private router: Router) {
     this.isAdmin$ = this.auth.isAdmin$;
+  }
+
+  esLogin(): boolean {
+    return this.router.url === '/login';
   }
 
   loginAdmin(): void {
@@ -26,7 +30,4 @@ export class Header {
   loginUser(): void {
     this.auth.loginAsUser();
   }
-
-
-
 }
