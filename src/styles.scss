@@ -54,7 +54,7 @@ body::before {
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover; /* ajusta el tamaño del logo */
-  opacity: 0.1; /* controla el nivel de transparencia (0.05 = muy sutil) */
+  opacity: 0.03; /* controla el nivel de transparencia (0.05 = muy sutil) */
   z-index: 0; /* detrás de todo el contenido */
   pointer-events: none; /* no bloquea clics */
   mix-blend-mode: normal;

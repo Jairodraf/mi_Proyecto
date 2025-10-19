@@ -1,0 +1,235 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
+  padding: 0 1rem;
+}
+
+/* === Título principal === */
+h1 {
+  color: #001529;
+  margin-top: 80px;
+  margin-bottom: 40px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* === Contenedor general === */
+.container-fluid.py-4 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* === Tarjetas generales === */
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: #fff;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* === Encabezados uniformes === */
+.card-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  color: #fff !important;
+}
+
+.card-header.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+/* === Tarjeta: Registrar ausencia === */
+#absenceCard {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#absenceCard .form-label {
+  color: #001529;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+#absenceCard .form-control,
+#absenceCard .form-select {
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.2);
+  padding: 10px;
+  font-size: 1rem;
+}
+
+#absenceCard .btn-primary {
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.3px;
+  padding: 10px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+  transition: all 0.2s ease;
+}
+
+#absenceCard .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(13, 110, 253, 0.4);
+}
+
+/* === Tarjeta: Listado de ausencias === */
+#absenceListCard {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+#absenceListCard .card-body {
+  padding: 1.25rem;
+}
+
+.absence-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(100px, 1fr));
+  gap: 10px;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: #fff;
+}
+
+.absence-row .small {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.absence-row .fw-bold {
+  font-size: 1rem;
+}
+
+/* === Botón Eliminar (rojo igual que Registrar incidencia) === */
+.abs-actions button {
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  color: #fff;
+  background-color: #dc3545; /* rojo uniforme */
+  border: none;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+  transition: all 0.2s ease;
+}
+.abs-actions button:hover {
+  background-color: #bb2d3b;
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.5);
+  transform: translateY(-1px);
+}
+
+/* === Responsive === */
+/* Tablet */
+@media (max-width: 992px) {
+  .absence-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .abs-actions {
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+}
+/* Móvil */
+@media (max-width: 576px) {
+  .absence-row {
+    grid-template-columns: 1fr;
+  }
+  .abs-actions {
+    text-align: center;
+    margin-top: 6px;
+  }
+  #absenceCard,
+  #absenceListCard {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* === Espacio inferior general === */
+.mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+/* ===== Modal simple controlado por Angular ===== */
+.modal-backdrop-app {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+
+.modal-card-app {
+  width: min(540px, 92vw);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: modalIn 120ms ease-out;
+}
+
+@keyframes modalIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.modal-header-app {
+  padding: 12px 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-body-app {
+  padding: 16px;
+  color: #001529;
+}
+
+.modal-footer-app {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.modal-footer-app .btn {
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+
+.modal-footer-app .btn-danger {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+}
+.modal-footer-app .btn-danger:hover {
+  background-color: #bb2d3b;
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.45);
+}
+
+.modal-footer-app .btn-light {
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  color: #001529;
+}

@@ -1,1 +1,106 @@
-<p>ausencias works!</p>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 mb-3">
+      <h1 class="display-4 text-center" style="color:#001529; font-size:30px;">Ausencias</h1>
+    </div>
+
+    <!-- Card: Registrar ausencia -->
+    <div class="col-12 col-md-3 d-flex flex-column mb-4">
+      <div id="absenceCard" class="card mt-1 shadow-sm h-100">
+        <div class="card-header bg-primary text-white">Registrar ausencia</div>
+        <div class="card-body">
+          <label class="form-label small fw-semibold">Fecha inicio</label>
+          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceStart">
+
+          <label class="form-label small fw-semibold">Fecha fin</label>
+          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceEnd">
+
+          <label class="form-label small fw-semibold">Motivo</label>
+          <div class="input-group mb-4">
+            <select class="form-select" [(ngModel)]="absenceReason">
+              <option value="" disabled selected>Seleccione motivo de la ausencia</option>
+              <option value="Vacaciones">Vacaciones</option>
+              <option value="Asistencia médica">Asistencia médica</option>
+              <option value="Traslado de domicilio">Traslado de domicilio</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100"
+                  (click)="onRegisterClick()"
+                  [disabled]="!absenceStart || !absenceEnd">
+            Registrar ausencia
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Listado de ausencias -->
+    <div class="col-12 col-md-7 d-flex flex-column mb-4">
+      <div id="absenceListCard" class="card mt-1 shadow-sm">
+        <div class="card-header bg-primary text-white">Listado de ausencias</div>
+        <div class="card-body">
+          <div *ngIf="absences.length === 0" class="text-muted text-center py-3">
+            No hay ausencias registradas.
+          </div>
+
+          <ul class="list-group" *ngIf="absences.length > 0">
+            <li *ngFor="let a of absences" class="list-group-item absence-row">
+              <div class="abs-start">
+                <div class="small text-muted">Inicio</div>
+                <div class="fw-bold">{{ a.start | date:'dd/MM/yyyy' }}</div>
+              </div>
+
+              <div class="abs-end">
+                <div class="small text-muted">Fin</div>
+                <div class="fw-bold">{{ a.end | date:'dd/MM/yyyy' }}</div>
+              </div>
+
+              <div class="abs-days">
+                <div class="small text-muted">Días</div>
+                <div class="fw-bold">{{ getDays(a) }}</div>
+              </div>
+
+              <div class="abs-reason">
+                <div class="small text-muted">Motivo</div>
+                <div class="text-break">{{ a.reason }}</div>
+              </div>
+
+              <div class="abs-actions text-end">
+                <button class="btn btn-danger btn-sm" (click)="removeAbsence(a.id)">
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Margen inferior -->
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- ===== Modal de confirmación (fuera del <li>, global) ===== -->
+  <div *ngIf="showConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-primary text-white">
+        Confirmar registro de ausencia
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-2">Revisa los datos antes de enviar el email:</p>
+        <ul class="list-unstyled mb-3">
+          <li><strong>Inicio:</strong> {{ pendingAbsence?.start | date:'dd/MM/yyyy' }}</li>
+          <li><strong>Fin:</strong> {{ pendingAbsence?.end | date:'dd/MM/yyyy' }}</li>
+          <li><strong>Días:</strong> {{ pendingAbsence ? getDays(pendingAbsence) : '-' }}</li>
+          <li><strong>Motivo:</strong> {{ pendingAbsence?.reason }}</li>
+        </ul>
+        <small class="text-muted d-block">Se abrirá tu aplicación de correo con este contenido.</small>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelConfirm()">Cancelar</button>
+        <button class="btn btn-danger" (click)="confirmAndEmail()">Aceptar y enviar</button>
+      </div>
+    </div>
+  </div>
+</div>

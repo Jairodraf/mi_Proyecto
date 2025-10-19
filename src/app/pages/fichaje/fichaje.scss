@@ -53,11 +53,12 @@ h1 {
   flex-direction: column;
 }
 
+/* Cuando la card de resultados crece */
 .card.mt-3.shadow-sm.flex-grow-1 .card-body {
   overflow: auto;
 }
 
-/* Resultados: columnas */
+/* Resultados: columnas (última columna con límites) */
 .list-group-item > div:last-child {
   min-width: 120px;
   max-width: 220px;
@@ -101,7 +102,52 @@ h1 {
   }
 }
 
-/* Móvil */
+/* === Resultados como GRID adaptable (reemplaza el antiguo flex) === */
+.result-row {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+
+  /* 🖥️ Desktop: 5 columnas (ini, fin, dur, inc. entrada, inc. salida) */
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+}
+
+/* Columnas: evita que hora/duración se rompan; incidencias pueden envolver */
+.result-col {
+  min-width: 0;
+}
+.result-col .result-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.result-incidence .result-value {
+  white-space: normal;          /* ✅ deja envolver texto largo en incidencias */
+  word-break: break-word;
+}
+
+/* Anchos mínimos útiles */
+.result-start, .result-end { min-width: 100px; }
+.result-duration { min-width: 120px; }
+.result-incidence {
+  flex: 1 1 220px; /* no afecta al grid, pero mantiene mínimos */
+  min-width: 160px;
+  max-width: 420px;
+}
+
+/* 💻 Tablets (≤ 992px): 4 columnas; incidencias a ancho completo debajo */
+@media (max-width: 992px) {
+  .result-row {
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+  }
+  /* Las dos incidencias bajan ocupando toda la fila */
+  .result-row > .result-incidence {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 📱 Móviles (≤ 767.98px): ajustes generales + resultados en 2 columnas */
 @media (max-width: 767.98px) {
   #leftControlsCard,
   #filterCard {
@@ -114,54 +160,62 @@ h1 {
     max-width: none;
   }
 
+  /* Resultados en 2 columnas */
   .result-row {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 10px 12px;
   }
 
-  .result-start,
-  .result-end,
-  .result-duration,
-  .result-incidence {
-    width: 100%;
+  /* Cada bloque ocupa media fila; incidencias a ancho completo */
+  .result-start, .result-end, .result-duration { grid-column: span 1; }
+  .result-row > .result-incidence { grid-column: 1 / -1; }
+
+  /* En pantallas muy estrechas, permite cortar aún mejor los textos largos */
+  .result-incidence .result-value {
+    overflow: visible;
+    word-break: break-word;
+    white-space: normal;
   }
 }
 
-/* Estilos de resultados */
-.result-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-}
-
-.result-col {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.result-col .result-value {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* Estilos de resultados (tamaños base) */
 .result-start,
 .result-end {
   width: 100px;
 }
-
 .result-duration {
   width: 120px;
 }
 
-.result-incidence {
-  flex: 1 1 220px;
-  min-width: 120px;
-  max-width: 420px;
-}
-
-/* Transiciones suaves en los tamaños de las tarjetas */
+/* Transiciones suaves en los tamaños de las tarjetas + sombra */
 .card {
   transition: width 300ms ease, height 300ms ease;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* === Centrar encabezados de todas las cards === */
+.card-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  color: #fff !important;
+}
+
+/* Azul uniforme por defecto (como Último fichaje y Filtrar) */
+.card-header.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+/* Mantiene el rojo para “Registrar incidencia” */
+.card-header.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+/* === Margen inferior extra debajo del cuadro de Resultados === */
+.card.mt-3:last-of-type {
+  margin-bottom: 80px;
 }

@@ -1,322 +1,271 @@
 import { Component, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule, NgForOf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
+type PunchType = 'Entrada' | 'Salida';
+type LastPressed = 'ENTRADA' | 'SALIDA';
+
+interface HistoryItem {
+  type: PunchType;    // 'Entrada' | 'Salida'
+  date: string;       // fecha local formateada
+  time: string;       // hora local formateada
+  ts: string;         // ISO timestamp
+  incidence?: string; // incidencia asociada a ese evento (entrada o salida)
+}
+
 @Component({
   selector: 'app-fichaje',
   standalone: true,
   imports: [CommonModule, FormsModule, NgForOf],
-  // Use the repaired official template
   templateUrl: './fichaje.html',
   styleUrls: ['./fichaje.scss']
 })
 export class Fichaje implements AfterViewInit, OnDestroy {
+
+  // Último fichaje mostrado en la tarjeta
   lastType: string = '—';
   lastDate: string = '';
   lastTime: string = '';
-  // Live clock shown above buttons
+
+  // Reloj en vivo
   currentTime: string = '';
 
-  // Button states: entrada enabled initially, salida disabled
+  // Estado de botones
   entradaDisabled = false;
   salidaDisabled = true;
 
-  // Persisted history of fichajes. Each entry may have an optional `incidence` text.
-  history: Array<{ type: string; date: string; time: string; ts: string; incidence?: string }> = [];
-
+  // Historial persistente
+  history: HistoryItem[] = [];
   private storageKey = 'fichaje_history_v1';
-  private clockIntervalId: any;
-  private _resizeHandler: (() => void) | null = null;
-  private _mutationObservers: MutationObserver[] = [];
 
-  // Filter inputs
+  // Track del último botón pulsado para asignar incidencias
+  lastPressed: LastPressed | null = null;
+  private lastEntryIndex: number | null = null;
+  private lastExitIndex: number | null = null;
+
+  // Filtros
   filterStart: string = '';
   filterEnd: string = '';
 
-  // Incidence input bound to the textarea; when registered it will be attached to the last 'Entrada' of the same day
+  // Incidencia (card roja)
   incidenceText: string = '';
 
-  // Computed groups after applying filter
-  filteredGroups: Array<{ date: string; pairs: Array<{ entrada: any; salida: any; durationMs: number }>; totalMs: number; dayIncidence?: string }> = [];
+  // Datos calculados para “Resultados”
+  filteredGroups: Array<{
+    date: string;
+    pairs: Array<{ entrada: HistoryItem | null; salida: HistoryItem | null; durationMs: number }>;
+    totalMs: number;
+  }> = [];
   filteredTotalMs: number = 0;
 
-  // When grouping by day we can attach a day-level incidence (string) if any were registered for that day
-  // The filteredGroups entries will include an optional `dayIncidence` property added in applyFilter().
+  private clockIntervalId: any = null;
 
   constructor() {
     this.loadHistory();
-    // Initialize button state based on last history item (if any)
+
+    // Inicializa estado a partir del último registro
     const last = this.history[this.history.length - 1];
-    if (last && last.type === 'Entrada') {
-      this.entradaDisabled = true;
-      this.salidaDisabled = false;
+    if (last) {
       this.lastType = last.type;
       this.lastDate = last.date;
       this.lastTime = last.time;
+      if (last.type === 'Entrada') {
+        this.entradaDisabled = true;
+        this.salidaDisabled = false;
+      } else {
+        this.entradaDisabled = false;
+        this.salidaDisabled = true;
+      }
     }
 
-    // Start live clock
+    // Reloj en vivo
     this.updateClock();
     this.clockIntervalId = setInterval(() => this.updateClock(), 1000);
   }
 
   ngAfterViewInit(): void {
-    // measure left control card and expose a CSS variable so right control cards can match height
-    this.updateControlHeights();
-    this.updateTopCardsHeight();
-    this._resizeHandler = () => {
-      this.updateControlHeights();
-      this.updateTopCardsHeight();
-    };
-    window.addEventListener('resize', this._resizeHandler);
-
-    // Setup MutationObservers on top cards so their height changes update the CSS var
-    this.setupMutationObservers();
+    // nada obligatorio aquí ahora mismo
   }
 
   ngOnDestroy(): void {
-    if (this.clockIntervalId) {
-      clearInterval(this.clockIntervalId);
-    }
-    if (this._resizeHandler) {
-      window.removeEventListener('resize', this._resizeHandler);
-      this._resizeHandler = null;
-    }
-    // disconnect mutation observers
-    for (const obs of this._mutationObservers) {
-      try { obs.disconnect(); } catch (e) { /* noop */ }
-    }
-    this._mutationObservers = [];
+    if (this.clockIntervalId) clearInterval(this.clockIntervalId);
   }
 
-  private setupMutationObservers() {
-    try {
-      const ids = ['leftControlsCard', 'lastFichajeCard', 'filterCard'];
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el) {
-          const obs = new MutationObserver(() => this.updateTopCardsHeight());
-          obs.observe(el, { attributes: true, childList: true, subtree: true, characterData: true });
-          this._mutationObservers.push(obs);
-        }
-      }
-    } catch (e) {
-      // ignore if DOM is not available
-    }
-  }
-
-  private updateControlHeights() {
-    try {
-      const el = document.getElementById('leftControlsCard');
-      if (el && el.getBoundingClientRect) {
-        const h = Math.round(el.getBoundingClientRect().height);
-        document.documentElement.style.setProperty('--left-controls-height', `${h}px`);
-      }
-    } catch (e) {
-      // no-op
-    }
-  }
-
-  private updateTopCardsHeight() {
-    try {
-      const ids = ['leftControlsCard', 'filterCard'];
-      let maxH = 0;
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect) {
-          const h = Math.round(el.getBoundingClientRect().height);
-          if (h > maxH) maxH = h;
-        }
-      }
-      if (maxH > 0) document.documentElement.style.setProperty('--top-cards-height', `${maxH}px`);
-    } catch (e) {
-      // ignore
-    }
-  }
-
+  // ---------- Reloj ----------
   private updateClock() {
     const now = new Date();
     this.currentTime = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
+  // ---------- Fichar ----------
   fichar(type: 'ENTRADA' | 'SALIDA') {
     const now = new Date();
-    // Format date/time for display
     const date = now.toLocaleDateString('es-ES');
     const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const iso = now.toISOString();
 
     if (type === 'ENTRADA') {
+      const entry: HistoryItem = { type: 'Entrada', date, time, ts: iso };
+      this.history.push(entry);
+      this.lastEntryIndex = this.history.length - 1;
+      this.lastPressed = 'ENTRADA';
+
       this.lastType = 'Entrada';
       this.lastDate = date;
       this.lastTime = time;
+
       this.entradaDisabled = true;
       this.salidaDisabled = false;
-      // Record Entrada without attaching a pre-registered incidence (incidences are registered explicitly)
-      this.pushHistory('Entrada', date, time, now.toISOString());
     } else {
+      const exit: HistoryItem = { type: 'Salida', date, time, ts: iso };
+      this.history.push(exit);
+      this.lastExitIndex = this.history.length - 1;
+      this.lastPressed = 'SALIDA';
+
       this.lastType = 'Salida';
       this.lastDate = date;
       this.lastTime = time;
+
       this.entradaDisabled = false;
       this.salidaDisabled = true;
-      this.pushHistory('Salida', date, time, now.toISOString());
     }
+
+    this.saveHistory();
   }
 
-  /**
-   * Register an incidence immediately with the current timestamp.
-   * It will be saved as an entry of type 'Incidencia' and can be grouped per day.
-   */
+  // ---------- Registrar incidencia (se asigna al último botón pulsado) ----------
   registerIncidentNow() {
-    const now = new Date();
-    const date = now.toLocaleDateString('es-ES');
-    const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const ts = now.toISOString();
-    const text = this.incidenceText ? this.incidenceText.trim() : '';
+    const text = (this.incidenceText || '').trim();
     if (!text) return;
-    // Try to attach the incidence to the most recent Entrada that doesn't already have one
-    for (let i = this.history.length - 1; i >= 0; i--) {
-      const h = this.history[i] as any;
-      if (h.type === 'Entrada' && !h.incidence) {
-        h.incidence = text;
-        this.saveHistory();
-        this.incidenceText = '';
-        // keep lastType as the last actual entry type, but update last fields if needed
-        this.lastType = h.type;
-        this.lastDate = h.date;
-        this.lastTime = h.time;
-        setTimeout(() => this.updateTopCardsHeight(), 50);
-        return;
-      }
-    }
-    // No Entrada found to attach: record as a standalone Incidencia entry (grouped by day)
-    const entry: any = { type: 'Incidencia', date, time, ts, incidence: text };
-    this.history.push(entry);
-    this.saveHistory();
-    this.incidenceText = '';
-    this.lastType = 'Incidencia';
-    this.lastDate = date;
-    this.lastTime = time;
-    setTimeout(() => this.updateTopCardsHeight(), 50);
-  }
 
-  private pushHistory(type: string, date: string, time: string, ts: string, incidence?: string) {
-    // If this is an Entrada and incidence is provided, store it on this entry.
-    const entry: any = { type, date, time, ts };
-    if (incidence) entry.incidence = incidence;
-    this.history.push(entry);
-    this.saveHistory();
-  }
-
-  private saveHistory() {
-    try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.history));
-    } catch (e) {
-      console.warn('Could not save history to localStorage', e);
-    }
-  }
-
-  private loadHistory() {
-    try {
-      const raw = localStorage.getItem(this.storageKey);
-      if (raw) {
-        // Support older format without incidence field by migrating entries
-        const parsed = JSON.parse(raw) as Array<any>;
-        this.history = parsed.map((e: any) => ({ type: e.type, date: e.date, time: e.time, ts: e.ts, incidence: e.incidence }));
-        // Populate last fields with the latest entry
-        const last = this.history[this.history.length - 1];
-        if (last) {
-          this.lastType = last.type;
-          this.lastDate = last.date;
-          this.lastTime = last.time;
+    // Si sabemos cuál fue el último botón, asignamos ahí
+    if (this.lastPressed === 'ENTRADA') {
+      let idx = this.lastEntryIndex;
+      if (idx == null) {
+        // buscar la última Entrada si recargó la página
+        for (let i = this.history.length - 1; i >= 0; i--) {
+          if (this.history[i].type === 'Entrada') { idx = i; break; }
         }
       }
-    } catch (e) {
-      console.warn('Could not load history from localStorage', e);
-      this.history = [];
+      if (idx != null && idx >= 0) {
+        this.history[idx].incidence = text;
+      }
+    } else if (this.lastPressed === 'SALIDA') {
+      let idx = this.lastExitIndex;
+      if (idx == null) {
+        // buscar la última Salida si recargó la página
+        for (let i = this.history.length - 1; i >= 0; i--) {
+          if (this.history[i].type === 'Salida') { idx = i; break; }
+        }
+      }
+      if (idx != null && idx >= 0) {
+        this.history[idx].incidence = text;
+      }
+    } else {
+      // Si no hay último pulsado, como fallback asignamos a la última Entrada si existe, si no a la última Salida
+      for (let i = this.history.length - 1; i >= 0; i--) {
+        if (this.history[i].type === 'Entrada') { this.history[i].incidence = text; break; }
+      }
     }
+
+    this.incidenceText = '';
+    this.saveHistory();
   }
 
-  clearHistory() {
-    this.history = [];
-    localStorage.removeItem(this.storageKey);
-    this.lastType = '—';
-    this.lastDate = '';
-    this.lastTime = '';
-    this.entradaDisabled = false;
-    this.salidaDisabled = true;
-    this.filteredGroups = [];
-    this.filteredTotalMs = 0;
-  }
-
+  // ---------- Filtrado y agrupación para “Resultados” ----------
   applyFilter() {
-    // parse filterStart/filterEnd as local dates
     if (!this.filterStart || !this.filterEnd) {
       this.filteredGroups = [];
       this.filteredTotalMs = 0;
       return;
     }
+
     const start = new Date(this.filterStart + 'T00:00:00');
     const end = new Date(this.filterEnd + 'T23:59:59.999');
 
-    // filter history entries within range
-    const items = this.history.filter(h => {
-      const t = new Date(h.ts);
-      return t >= start && t <= end;
-    }).sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+    // filtra por rango y ordena por tiempo
+    const items = this.history
+      .filter(h => {
+        const t = new Date(h.ts);
+        return t >= start && t <= end;
+      })
+      .sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
 
-    // group by local date
-    const groupsMap = new Map<string, Array<any>>();
+    // agrupa por fecha local
+    const byDate = new Map<string, HistoryItem[]>();
     for (const it of items) {
-      const localDate = new Date(it.ts).toLocaleDateString('es-ES');
-      if (!groupsMap.has(localDate)) groupsMap.set(localDate, []);
-      groupsMap.get(localDate)!.push(it);
+      const d = new Date(it.ts).toLocaleDateString('es-ES');
+      if (!byDate.has(d)) byDate.set(d, []);
+      byDate.get(d)!.push(it);
     }
 
-  const groups: Array<{ date: string; pairs: Array<{ entrada: any; salida: any; durationMs: number }>; totalMs: number; dayIncidence?: string }> = [];
+    const groups: Array<{ date: string; pairs: Array<{ entrada: HistoryItem | null; salida: HistoryItem | null; durationMs: number }>; totalMs: number }> = [];
     let overall = 0;
-    // iterate groups in date order
-    const orderedDates = Array.from(groupsMap.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-    for (const date of orderedDates) {
-      const arr = groupsMap.get(date)!;
-      const pairs: Array<{ entrada: any; salida: any; durationMs: number }> = [];
-      // Collect any day-level incidence entries (type === 'Incidencia')
-      const dayInc = arr.filter(x => x.type === 'Incidencia').map(x => x.incidence).filter(Boolean);
-      const dayIncidenceText = dayInc.length ? dayInc.join(' | ') : undefined;
-      let pending: any = null;
+
+    const orderedDates = Array.from(byDate.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    for (const d of orderedDates) {
+      const arr = byDate.get(d)!;
+
+      const pairs: Array<{ entrada: HistoryItem | null; salida: HistoryItem | null; durationMs: number }> = [];
+      let pendingEntrada: HistoryItem | null = null;
+
       for (const it of arr) {
         if (it.type === 'Entrada') {
-          pending = it;
-        } else if (it.type === 'Salida') {
-          if (pending) {
-            const dur = new Date(it.ts).getTime() - new Date(pending.ts).getTime();
-            // include incidence text from the Entrada entry (if any)
-            pairs.push({ entrada: pending, salida: it, durationMs: dur });
-            pending = null;
+          // si había pendiente sin salida, emparejamos como entrada sin salida
+          if (pendingEntrada) {
+            pairs.push({ entrada: pendingEntrada, salida: null, durationMs: 0 });
+          }
+          pendingEntrada = it;
+        } else {
+          // Salida
+          if (pendingEntrada) {
+            const dur = new Date(it.ts).getTime() - new Date(pendingEntrada.ts).getTime();
+            pairs.push({ entrada: pendingEntrada, salida: it, durationMs: Math.max(dur, 0) });
+            pendingEntrada = null;
           } else {
-            // unmatched salida — ignore or could be paired with previous day; skip
+            // Salida sin entrada previa: la registramos como par “huérfano”
+            pairs.push({ entrada: null, salida: it, durationMs: 0 });
           }
         }
       }
-      const totalMs = pairs.reduce((s, p) => s + p.durationMs, 0);
+
+      // Si quedó una entrada sin salida al final del día
+      if (pendingEntrada) {
+        pairs.push({ entrada: pendingEntrada, salida: null, durationMs: 0 });
+      }
+
+      const totalMs = pairs.reduce((acc, p) => acc + (p.durationMs || 0), 0);
       overall += totalMs;
-      const g: any = { date, pairs, totalMs };
-      if (dayIncidenceText) g.dayIncidence = dayIncidenceText;
-      groups.push(g);
+      groups.push({ date: d, pairs, totalMs });
     }
 
     this.filteredGroups = groups;
     this.filteredTotalMs = overall;
   }
 
-  // helper to format ms to hh:mm format and decimal hours
-  msToHhMm(ms: number) {
-    const totalSec = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSec / 3600);
-    const minutes = Math.floor((totalSec % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+  // ---------- Utilidades ----------
+  private saveHistory() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+    } catch { /* noop */ }
   }
 
-  msToDecimalHours(ms: number) {
-    return (ms / (1000 * 60 * 60));
+  private loadHistory() {
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as HistoryItem[];
+        this.history = parsed ?? [];
+      }
+    } catch {
+      this.history = [];
+    }
+  }
+
+  msToHhMm(ms: number) {
+    const totalSec = Math.floor((ms || 0) / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    return `${h}h ${m}m`;
   }
 }

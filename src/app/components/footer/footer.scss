@@ -4,14 +4,16 @@
   right: 0;
   bottom: 0;
   height: var(--app-footer-height);
-  background-color: rgba(255,255,255,0.95);
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   padding: 10px 20px;
-  box-shadow: 0 -6px 18px rgba(0,0,0,0.06);
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 1050;
+  border-top: 2px solid rgba(13, 110, 253, 0.2);
+  flex-wrap: wrap; /* permite reorganizar en móviles */
 }
 
 .footer h3 {
@@ -19,24 +21,69 @@
   text-align: center;
   color: #001529;
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 500;
 }
 
 .footer-links {
   display: flex;
-  font-size: 20px;
-  gap: 8px;
+  font-size: 18px;
+  gap: 10px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .footer-links a {
   color: #001529;
   text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.25s ease;
 }
 
+/* 🔹 Hover */
 .footer-links a:hover {
-  background-color: rgba(255,255,255,0.9);
-  color: #001529;
+  background-color: #0d6efd;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.3);
+  transform: translateY(-2px);
+}
+
+/* 🔹 Activo */
+.footer-links a.active {
+  background-color: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(13, 110, 253, 0.25);
+}
+
+/* 🔹 Evita que el contenido quede debajo del footer */
+:host ::ng-deep main {
+  padding-bottom: var(--app-footer-height);
+}
+
+/* 📱 Diseño responsive */
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: column;
+    text-align: center;
+    padding: 12px;
+    height: auto; /* se adapta al contenido */
+  }
+
+  .footer h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .footer-links {
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .footer-links a {
+    font-size: 16px;
+    padding: 6px 10px;
+  }
 }
