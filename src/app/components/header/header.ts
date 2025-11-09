@@ -1,19 +1,20 @@
 import { Component } from '@angular/core';
-import { RouterModule, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { RouterModule, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { CommonModule, NgIf } from '@angular/common';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterLink],
+  imports: [CommonModule, NgIf, RouterModule, RouterLink, RouterLinkActive],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })
 export class Header {
   isAdmin$: Observable<boolean>;
+  // opcional, por si quieres ocultar todo si no hay sesión
+  // isLogged$ = this.auth.isLogged$;
 
   constructor(private auth: AuthService, private router: Router) {
     this.isAdmin$ = this.auth.isAdmin$;
@@ -23,11 +24,9 @@ export class Header {
     return this.router.url === '/login';
   }
 
-  loginAdmin(): void {
-    this.auth.loginAsAdmin();
-  }
-
-  loginUser(): void {
-    this.auth.loginAsUser();
+  // Botón “Cerrar sesión” si lo usas en el header
+  salir(): void {
+    this.auth.clear();
+    this.router.navigateByUrl('/login');
   }
 }

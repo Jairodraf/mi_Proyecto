@@ -1,4 +1,3 @@
-// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
 
@@ -22,10 +21,16 @@ export class AuthService {
     empleadoId: localStorage.getItem(this.kEmp) ? Number(localStorage.getItem(this.kEmp)) : null
   });
 
-  readonly state$   = this._state$.asObservable();
-  readonly isLogged$ = this.state$.pipe(map(s => !!s.token));
-  readonly isAdmin$  = this.state$.pipe(map(s => s.rol === 'Admin'));
+  /** Estado completo (si lo necesitas en otros sitios) */
+  readonly state$ = this._state$.asObservable();
 
+  /** Está logueado si hay token */
+  readonly isLogged$ = this.state$.pipe(map(s => !!s.token));
+
+  /** Es admin si el rol === 'Admin' */
+  readonly isAdmin$ = this.state$.pipe(map(s => s.rol === 'Admin'));
+
+  /** Guardar credenciales tras el login */
   setAuth(token: string, rol: Rol, empleadoId: number) {
     localStorage.setItem(this.kTok, token);
     localStorage.setItem(this.kRol, String(rol));
@@ -33,7 +38,7 @@ export class AuthService {
     this._state$.next({ token, rol, empleadoId });
   }
 
-  /** ⬇️ Añade este método */
+  /** Limpiar sesión */
   clear() {
     localStorage.removeItem(this.kTok);
     localStorage.removeItem(this.kRol);
@@ -41,9 +46,7 @@ export class AuthService {
     this._state$.next({ token: null, rol: null, empleadoId: null });
   }
 
-  hasToken(): boolean {
-  return !!this._state$.value.token;   // si usas BehaviorSubject interno
-  // alternativa simple: return !!localStorage.getItem('jwt_token');
-}
-
+  /** Helpers síncronos (por si los necesitas en guards) */
+  hasToken(): boolean { return !!this._state$.value.token; }
+  isAdmin(): boolean { return this._state$.value.rol === 'Admin'; }
 }

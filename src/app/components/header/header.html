@@ -13,16 +13,12 @@
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
       <!-- Mostrar solo en rutas distintas de /login -->
       <ng-container *ngIf="!esLogin()">
+
         <a *ngIf="(isAdmin$ | async)" routerLink="/registro" routerLinkActive="active">Registro</a>
         <a routerLink="/fichaje" routerLinkActive="active">Fichaje</a>
         <a routerLink="/ausencias" routerLinkActive="active">Ausencias</a>
         <a routerLink="/logout" routerLinkActive="active">Cerrar sesión</a>
 
-        <!-- Controles temporales de rol para pruebas -->
-        <div class="role-controls" style="display:inline-block; margin-left:1rem;">
-          <button type="button" (click)="loginAdmin()" title="Iniciar como administrador">Admin</button>
-          <button type="button" (click)="loginUser()" title="Iniciar como usuario">User</button>
-        </div>
       </ng-container>
     </div>
   </nav>

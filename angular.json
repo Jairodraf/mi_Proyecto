@@ -44,11 +44,20 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "scripts": true,
+
+                "fonts": true
+              },
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "5MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -97,6 +106,7 @@
               }
             ],
             "styles": [
+              "node_modules/ng-zorro-antd/ng-zorro-antd.min.css",
               "src/styles.scss"
             ]
           }
