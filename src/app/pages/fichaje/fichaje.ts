@@ -8,7 +8,7 @@ type PunchType = 'Entrada' | 'Salida';
 type LastPressed = 'ENTRADA' | 'SALIDA';
 
 interface HistoryItem {
-  id?: string;        // <-- id del backend (para poder actualizar observación)
+  id?: string; // <-- id del backend (para poder actualizar observación)
   type: PunchType;
   date: string;
   time: string;
@@ -21,7 +21,7 @@ interface HistoryItem {
   standalone: true,
   imports: [CommonModule, FormsModule, NgForOf],
   templateUrl: './fichaje.html',
-  styleUrls: ['./fichaje.scss']
+  styleUrls: ['./fichaje.scss'],
 })
 export class Fichaje implements AfterViewInit, OnDestroy {
   private api = inject(FichajesService);
@@ -80,11 +80,17 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {}
-  ngOnDestroy(): void { if (this.clockIntervalId) clearInterval(this.clockIntervalId); }
+  ngOnDestroy(): void {
+    if (this.clockIntervalId) clearInterval(this.clockIntervalId);
+  }
 
   private updateClock() {
     const now = new Date();
-    this.currentTime = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    this.currentTime = now.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   }
 
   // ===== helper para el error TS2554 (no existía en tu código) =====
@@ -95,11 +101,96 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     return null;
   }
 
+  // ---------- Filtrado y agrupación para “Resultados” ----------
+  applyFilter() {
+    if (!this.filterStart || !this.filterEnd) {
+      this.filteredGroups = [];
+      this.filteredTotalMs = 0;
+      return;
+    }
+
+    const start = new Date(this.filterStart + 'T00:00:00');
+    const end = new Date(this.filterEnd + 'T23:59:59.999');
+
+    // filtra por rango y ordena por tiempo
+    const items = this.history
+      .filter((h) => {
+        const t = new Date(h.ts);
+        return t >= start && t <= end;
+      })
+      .sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+
+    // agrupa por fecha local
+    const byDate = new Map<string, HistoryItem[]>();
+    for (const it of items) {
+      const d = new Date(it.ts).toLocaleDateString('es-ES');
+      if (!byDate.has(d)) byDate.set(d, []);
+      byDate.get(d)!.push(it);
+    }
+
+    const groups: Array<{
+      date: string;
+      pairs: Array<{ entrada: HistoryItem | null; salida: HistoryItem | null; durationMs: number }>;
+      totalMs: number;
+    }> = [];
+    let overall = 0;
+
+    const orderedDates = Array.from(byDate.keys()).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    );
+    for (const d of orderedDates) {
+      const arr = byDate.get(d)!;
+
+      const pairs: Array<{
+        entrada: HistoryItem | null;
+        salida: HistoryItem | null;
+        durationMs: number;
+      }> = [];
+      let pendingEntrada: HistoryItem | null = null;
+
+      for (const it of arr) {
+        if (it.type === 'Entrada') {
+          // si había pendiente sin salida, emparejamos como entrada sin salida
+          if (pendingEntrada) {
+            pairs.push({ entrada: pendingEntrada, salida: null, durationMs: 0 });
+          }
+          pendingEntrada = it;
+        } else {
+          // Salida
+          if (pendingEntrada) {
+            const dur = new Date(it.ts).getTime() - new Date(pendingEntrada.ts).getTime();
+            pairs.push({ entrada: pendingEntrada, salida: it, durationMs: Math.max(dur, 0) });
+            pendingEntrada = null;
+          } else {
+            // Salida sin entrada previa: la registramos como par “huérfano”
+            pairs.push({ entrada: null, salida: it, durationMs: 0 });
+          }
+        }
+      }
+
+      // Si quedó una entrada sin salida al final del día
+      if (pendingEntrada) {
+        pairs.push({ entrada: pendingEntrada, salida: null, durationMs: 0 });
+      }
+
+      const totalMs = pairs.reduce((acc, p) => acc + (p.durationMs || 0), 0);
+      overall += totalMs;
+      groups.push({ date: d, pairs, totalMs });
+    }
+
+    this.filteredGroups = groups;
+    this.filteredTotalMs = overall;
+  }
+
   // ---------- Fichar ----------
   fichar(type: 'ENTRADA' | 'SALIDA') {
     const now = new Date();
     const date = now.toLocaleDateString('es-ES');
-    const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const time = now.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
     const iso = now.toISOString();
 
     if (type === 'ENTRADA') {
@@ -125,10 +216,10 @@ export class Fichaje implements AfterViewInit, OnDestroy {
           this.history[this.lastEntryIndex!].id = res.id;
           this.saveHistory();
         },
-        error: () => this.msg.error('No se pudo registrar la Entrada en servidor')
+        error: () => this.msg.error('No se pudo registrar la Entrada en servidor'),
       });
-
-    } else { // SALIDA
+    } else {
+      // SALIDA
       const exit: HistoryItem = { type: 'Salida', date, time, ts: iso };
       this.history.push(exit);
       this.lastExitIndex = this.history.length - 1;
@@ -148,7 +239,7 @@ export class Fichaje implements AfterViewInit, OnDestroy {
           this.history[this.lastExitIndex!].id = res.id;
           this.saveHistory();
         },
-        error: () => this.msg.error('No se pudo registrar la Salida en servidor')
+        error: () => this.msg.error('No se pudo registrar la Salida en servidor'),
       });
     }
   }
@@ -179,7 +270,7 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     if (id) {
       this.api.actualizarObservacion(id, text).subscribe({
         next: () => this.msg.success('Incidencia guardada'),
-        error: () => this.msg.error('No se pudo guardar la incidencia en el servidor')
+        error: () => this.msg.error('No se pudo guardar la incidencia en el servidor'),
       });
     } else {
       this.msg.warning('Incidencia guardada localmente (pendiente de sincronizar)');
@@ -189,13 +280,17 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   // … (resto de tu código: filtros, agrupación, utilidades)
 
   private saveHistory() {
-    try { localStorage.setItem(this.storageKey, JSON.stringify(this.history)); } catch {}
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+    } catch {}
   }
   private loadHistory() {
     try {
       const raw = localStorage.getItem(this.storageKey);
       this.history = raw ? (JSON.parse(raw) as HistoryItem[]) : [];
-    } catch { this.history = []; }
+    } catch {
+      this.history = [];
+    }
   }
 
   msToHhMm(ms: number) {
