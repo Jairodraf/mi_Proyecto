@@ -1,5 +1,5 @@
+// src/app/pages/registro/registro.ts
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -12,8 +12,13 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { EmpleadosService, CreateEmpleadoDto, EmpleadoDto } from '../../services/empleados.service';
+import { finalize } from 'rxjs/operators';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { HttpErrorResponse } from '@angular/common/http';
+
 @Component({
   selector: 'app-registro',
   standalone: true,
@@ -24,7 +29,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
     NzCheckboxModule,
     NzButtonModule,
     NzSelectModule,
-    NzModalModule
+    NzModalModule,
   ],
   templateUrl: './registro.html',
   styleUrls: ['./registro.scss'],
@@ -32,10 +37,12 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 export class Registro implements OnInit, OnDestroy {
   private fb = inject(NonNullableFormBuilder);
   private destroy$ = new Subject<void>();
+  private api = inject(EmpleadosService);
+  private msg = inject(NzMessageService);
 
-  // control de modales
   isConfirmVisible = false;
   isSuccessVisible = false;
+  loading = false;
 
   datosConfirmados: any = {};
 
@@ -59,11 +66,7 @@ export class Registro implements OnInit, OnDestroy {
       Validators.minLength(9),
       Validators.pattern('^[0-9]{9}$'),
     ]),
-    rol: this.fb.control('', [
-      Validators.required,
-      Validators.minLength(3),
-      Validators.pattern('^(user|admin)$'),
-    ]),
+    rol: this.fb.control('', [Validators.required, Validators.pattern(/^(admin|user)$/i)]),
   });
 
   ngOnInit(): void {}
@@ -75,7 +78,7 @@ export class Registro implements OnInit, OnDestroy {
   submitForm(): void {
     if (this.validateForm.valid) {
       this.datosConfirmados = this.validateForm.value;
-      this.isConfirmVisible = true; // muestra modal de confirmación
+      this.isConfirmVisible = true;
     } else {
       Object.values(this.validateForm.controls).forEach((control) => {
         if (control.invalid) {
@@ -87,16 +90,55 @@ export class Registro implements OnInit, OnDestroy {
   }
 
   handleConfirmOk(): void {
-    console.log('Registro confirmado:', this.datosConfirmados);
     this.isConfirmVisible = false;
-    this.validateForm.reset();
-    this.isSuccessVisible = true; // muestra modal de éxito
+
+    const v = this.validateForm.getRawValue();
+    const rol = (v.rol || '').toString().toLowerCase() === 'admin' ? 'Admin' : 'User';
+    const telefonoRaw = `${v.phoneNumberPrefix ?? ''}${v.phoneNumber ?? ''}`.replace(/\s+/g, '');
+    const telefono = telefonoRaw.length ? telefonoRaw : null;
+
+    const dto: CreateEmpleadoDto = {
+      nombre: v.nombre!.trim(),
+      apellidos: v.apellidos!.trim(),
+      dni: v.dni!.trim().toUpperCase(), // suele pedirse en mayúsculas
+      email: v.email!.trim().toLowerCase(),
+      contrasena: v.password!, // mapeo correcto
+      telefono,
+      rol, // "Admin" | "User"
+    };
+
+    this.loading = true;
+    this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
+
+    this.api
+      .create(dto)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.validateForm.enable();
+        })
+      )
+      .subscribe({
+        next: (res: EmpleadoDto) => {
+          this.msg.success(`Empleado ${res.nombre} creado`);
+          this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
+          this.isSuccessVisible = true;
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err?.status === 409) {
+            this.msg.error('Ya existe un empleado con ese DNI o Email');
+          } else if (err?.status === 403 || err?.status === 401) {
+            this.msg.error('No autorizado. Debes iniciar sesión como Admin');
+          } else {
+            this.msg.error('Error al crear el empleado');
+          }
+        },
+      });
   }
 
   handleConfirmCancel(): void {
     this.isConfirmVisible = false;
   }
-
   handleSuccessOk(): void {
     this.isSuccessVisible = false;
   }
@@ -105,6 +147,6 @@ export class Registro implements OnInit, OnDestroy {
     if (!control.value) return { required: true };
     if (control.value !== this.validateForm.controls.password.value)
       return { confirm: true, error: true };
-    return {};
+    return null;
   }
 }

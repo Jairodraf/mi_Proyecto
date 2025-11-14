@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EmpleadosService, CreateEmpleadoDto, EmpleadoDto } from '../../services/empleados.service';
 
 import { Registro } from './registro';
 

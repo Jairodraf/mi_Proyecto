@@ -11,15 +11,19 @@
     <!-- Enlaces de navegación -->
     <div class="header-links">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
-      <!-- Mostrar solo en rutas distintas de /login -->
-      <ng-container *ngIf="!esLogin()">
 
-        <a *ngIf="(isAdmin$ | async)" routerLink="/registro" routerLinkActive="active">Registro</a>
+      <!-- Mostrar enlaces solo si hay sesión -->
+      <ng-container *ngIf="(isLogged$ | async); else invitado">
         <a routerLink="/fichaje" routerLinkActive="active">Fichaje</a>
         <a routerLink="/ausencias" routerLinkActive="active">Ausencias</a>
-        <a routerLink="/logout" routerLinkActive="active">Cerrar sesión</a>
-
+        <a *ngIf="(isAdmin$ | async)" routerLink="/registro" routerLinkActive="active">Registro</a>
+        <a (click)="logout()" style="cursor:pointer">Cerrar sesión</a>
       </ng-container>
+
+      <!-- Si NO hay sesión, solo mostrar login -->
+      <ng-template #invitado>
+        <a routerLink="/login" routerLinkActive="active">Iniciar sesión</a>
+      </ng-template>
     </div>
   </nav>
 </header>

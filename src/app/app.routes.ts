@@ -1,4 +1,8 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
+
 import { Login } from './pages/login/login';
 import { Registro } from './pages/registro/registro';
 import { Privacidad } from './pages/privacidad/privacidad';
@@ -8,15 +12,19 @@ import { Fichaje } from './pages/fichaje/fichaje';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
-  { path: 'registro', component: Registro },
-  { path: 'fichaje', component: Fichaje },
+
+  // protegidas (requieren token)
+  { path: 'fichaje',   component: Fichaje,   canMatch: [authGuard] },
+  { path: 'ausencias', component: Ausencias, canMatch: [authGuard] },
+
+  // solo admin
+  { path: 'registro',  component: Registro,  canMatch: [authGuard, adminGuard] },
+
+  // públicas
   { path: 'privacidad', component: Privacidad },
-  { path: 'contacto', component: Contacto },
-  { path: 'ausencias', component: Ausencias },
+  { path: 'contacto',   component: Contacto },
   { path: 'contacto.html', redirectTo: 'contacto', pathMatch: 'full' },
 
-
-  { path: 'logout', redirectTo: 'login' },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: '' }
 ];

@@ -1,32 +1,34 @@
 import { Component } from '@angular/core';
-import { RouterModule, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { CommonModule, NgIf } from '@angular/common';
+import { RouterModule, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, NgIf, RouterModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule, RouterLink],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })
 export class Header {
   isAdmin$: Observable<boolean>;
-  // opcional, por si quieres ocultar todo si no hay sesión
-  // isLogged$ = this.auth.isLogged$;
+  isLogged$: Observable<boolean>;
 
   constructor(private auth: AuthService, private router: Router) {
     this.isAdmin$ = this.auth.isAdmin$;
+    this.isLogged$ = this.auth.isLogged$;
   }
 
-  esLogin(): boolean {
-    return this.router.url === '/login';
-  }
-
-  // Botón “Cerrar sesión” si lo usas en el header
-  salir(): void {
-    this.auth.clear();
-    this.router.navigateByUrl('/login');
+  logout(): void {
+    this.auth.logout();
+    this.router.navigateByUrl('/login', { replaceUrl: true }).then(() => {
+      // bloqueo del primer “atrás”
+      history.pushState(null, '', location.href);
+      window.addEventListener('popstate', () => {
+        history.pushState(null, '', location.href);
+      }, { once: true });
+    });
   }
 }

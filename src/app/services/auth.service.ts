@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
 
-type Rol = 'Admin' | 'Empleado' | string;
+export type Rol = 'Admin' | 'User' | 'Empleado' | string;
 
 interface AuthState {
   token: string | null;
@@ -12,20 +12,31 @@ interface AuthState {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private kTok = 'jwt_token';
-  private kRol = 'rol';
-  private kEmp = 'empleadoId';
+  private readonly kTok = 'jwt_token';
+  private readonly kRol = 'rol';
+  private readonly kEmp = 'empleadoId';
 
+  // Estado inicial desde localStorage
   private _state$ = new BehaviorSubject<AuthState>({
     token: localStorage.getItem(this.kTok),
     rol: (localStorage.getItem(this.kRol) as Rol) ?? null,
-    empleadoId: localStorage.getItem(this.kEmp) ? Number(localStorage.getItem(this.kEmp)) : null
+    empleadoId: localStorage.getItem(this.kEmp)
+      ? Number(localStorage.getItem(this.kEmp))
+      : null,
   });
 
-  readonly state$   = this._state$.asObservable();
+  // Observables para el header/guards
+  readonly state$    = this._state$.asObservable();
   readonly isLogged$ = this.state$.pipe(map(s => !!s.token));
   readonly isAdmin$  = this.state$.pipe(map(s => s.rol === 'Admin'));
 
+  // Helpers sincronizados
+  hasToken(): boolean { return !!this._state$.value.token; }
+  get token(): string | null { return this._state$.value.token; }
+  get rol(): Rol | null { return this._state$.value.rol; }
+  get empleadoId(): number | null { return this._state$.value.empleadoId; }
+
+  // Guardar credenciales tras login
   setAuth(token: string, rol: Rol, empleadoId: number) {
     localStorage.setItem(this.kTok, token);
     localStorage.setItem(this.kRol, String(rol));
@@ -33,17 +44,14 @@ export class AuthService {
     this._state$.next({ token, rol, empleadoId });
   }
 
-  /** ⬇️ Añade este método */
-  clear() {
+  // Cerrar sesión (borra todo y emite estado vacío)
+  logout() {
     localStorage.removeItem(this.kTok);
     localStorage.removeItem(this.kRol);
     localStorage.removeItem(this.kEmp);
     this._state$.next({ token: null, rol: null, empleadoId: null });
   }
 
-  hasToken(): boolean {
-  return !!this._state$.value.token;   // si usas BehaviorSubject interno
-  // alternativa simple: return !!localStorage.getItem('jwt_token');
-}
-
+  // Alias por compatibilidad con código previo
+  clear() { this.logout(); }
 }
