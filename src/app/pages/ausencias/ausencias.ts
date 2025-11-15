@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';   // *ngIf, *ngFor, pipes
-import { FormsModule } from '@angular/forms';     // [(ngModel)]
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AusenciasService } from '../../services/ausencias.service';
 
 interface Absence {
   id: string;
-  start: string;      // YYYY-MM-DD
-  end: string;        // YYYY-MM-DD
+  start: string;
+  end: string;
   reason: string;
-  createdAt: string;  // ISO
+  createdAt: string;
 }
 
 @Component({
@@ -18,31 +19,29 @@ interface Absence {
   styleUrls: ['./ausencias.scss']
 })
 export class Ausencias {
-  // Form
   absenceStart = '';
   absenceEnd = '';
   absenceReason = '';
 
-  // State
   absences: Absence[] = [];
   private storageKey = 'ausencias_v1';
 
-  // Modal de confirmación
   showConfirm = false;
   pendingAbsence: Absence | null = null;
 
-  constructor() {
+  constructor(private api: AusenciasService) {
     this.load();
   }
 
-  /** Botón "Registrar ausencia" -> valida y abre modal (NO guarda aún) */
   onRegisterClick() {
     if (!this.absenceStart || !this.absenceEnd) {
       alert('Por favor, selecciona fecha de inicio y fin.');
       return;
     }
+
     const start = new Date(this.absenceStart + 'T00:00:00');
-    const end   = new Date(this.absenceEnd   + 'T23:59:59');
+    const end = new Date(this.absenceEnd + 'T23:59:59');
+
     if (end < start) {
       alert('La fecha de fin no puede ser anterior a la de inicio.');
       return;
@@ -55,30 +54,47 @@ export class Ausencias {
       reason: (this.absenceReason || '').trim() || 'Sin especificar',
       createdAt: new Date().toISOString()
     };
+
     this.showConfirm = true;
   }
 
-  /** Cerrar modal sin guardar ni enviar */
   cancelConfirm() {
     this.showConfirm = false;
     this.pendingAbsence = null;
   }
 
-  /** Aceptar modal: guarda y abre el email con mailto */
   confirmAndEmail() {
     if (!this.pendingAbsence) return;
 
-    // 1) Guardar en listado/localStorage
-    this.absences.push(this.pendingAbsence);
-    this.save();
+    const dto = {
+      start: this.pendingAbsence.start,
+      end: this.pendingAbsence.end,
+      reason: this.pendingAbsence.reason
+    };
 
-    // 2) Preparar email
-    const to = 'jaime.rodriguez.rafael@gmail.com';
-    const startStr = this.formatDateES(this.pendingAbsence.start);
-    const endStr   = this.formatDateES(this.pendingAbsence.end);
-    const dias     = this.getDays(this.pendingAbsence);
+    this.api.crear(dto).subscribe({
+      next: (res) => {
+        this.absences.push({
+          id: res.id,
+          start: res.start,
+          end: res.end,
+          reason: res.reason,
+          createdAt: res.createdAt
+        });
 
-    const subject = `Solicitud de ausencia: ${startStr} - ${endStr}`;
+        this.save();
+        this.sendEmail(this.pendingAbsence!);
+        this.resetForm();
+      },
+      error: () => alert('Error al registrar la ausencia en el servidor')
+    });
+  }
+
+  private sendEmail(a: Absence) {
+    const startStr = this.formatDateES(a.start);
+    const endStr = this.formatDateES(a.end);
+    const dias = this.getDays(a);
+
     const bodyLines = [
       'Hola,',
       '',
@@ -86,23 +102,15 @@ export class Ausencias {
       `· Inicio: ${startStr}`,
       `· Fin: ${endStr}`,
       `· Días: ${dias}`,
-      `· Motivo: ${this.pendingAbsence.reason}`,
+      `· Motivo: ${a.reason}`,
       '',
       'Gracias y un saludo.'
     ];
-    const body = bodyLines.join('\n');
 
-    const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const subject = `Solicitud de ausencia: ${startStr} - ${endStr}`;
+    const mailto = `mailto:jaime.rodriguez.rafael@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
 
-    // 3) Abrir aplicación de email
     window.location.href = mailto;
-
-    // 4) Reset UI
-    this.showConfirm = false;
-    this.pendingAbsence = null;
-    this.absenceStart = '';
-    this.absenceEnd = '';
-    this.absenceReason = '';
   }
 
   removeAbsence(id: string) {
@@ -110,14 +118,21 @@ export class Ausencias {
     this.save();
   }
 
+  private resetForm() {
+    this.showConfirm = false;
+    this.pendingAbsence = null;
+    this.absenceStart = '';
+    this.absenceEnd = '';
+    this.absenceReason = '';
+  }
+
   getDays(a: Absence): number {
     const start = new Date(a.start + 'T00:00:00');
-    const end   = new Date(a.end   + 'T23:59:59');
+    const end = new Date(a.end + 'T23:59:59');
     const diff = end.getTime() - start.getTime();
     return Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1);
   }
 
-  // Utils
   private save() {
     localStorage.setItem(this.storageKey, JSON.stringify(this.absences));
   }
@@ -125,8 +140,11 @@ export class Ausencias {
   private load() {
     const raw = localStorage.getItem(this.storageKey);
     if (raw) {
-      try { this.absences = JSON.parse(raw) as Absence[]; }
-      catch { this.absences = []; }
+      try {
+        this.absences = JSON.parse(raw) as Absence[];
+      } catch {
+        this.absences = [];
+      }
     }
   }
 
@@ -137,6 +155,10 @@ export class Ausencias {
   private formatDateES(yyyyMMdd: string): string {
     const [y, m, d] = yyyyMMdd.split('-').map(Number);
     const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
-    return dt.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return dt.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 }

@@ -30,13 +30,22 @@ export class FichajesService {
     return this.http.post<FichajeDto>(this.base, dto);
   }
 
-  actualizarObservacion(id: string, observacion: string): Observable<void> {
+  /*   actualizarObservacion(id: string, observacion: string): Observable<void> {
     return this.http.put<void>(`${this.base}/${id}/observacion`, { observacion });
+  } */
+
+  actualizarObservacion(id: string, observacion: string) {
+    return this.http.put<void>(`/api/fichajes/${id}/observacion`, { observacion });
   }
 
   // (opcional) Obtener mis últimos
   misFichajes(limit?: number): Observable<FichajeDto[]> {
     const url = limit ? `${this.base}/mios?limit=${limit}` : `${this.base}/mios`;
     return this.http.get<FichajeDto[]>(url);
+  }
+
+  // Obtener todos los fichajes (endpoint para administradores)
+  todos(): Observable<FichajeDto[]> {
+    return this.http.get<FichajeDto[]>(this.base);
   }
 }

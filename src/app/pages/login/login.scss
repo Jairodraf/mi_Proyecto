@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;   /* centra todo verticalmente */
-  height: 100vh;             /* ocupa solo la pantalla visible */
+  min-height: 100vh;             /* ocupa solo la pantalla visible */
   background: transparent;   /* deja ver el fondo global */
   padding: 0 16px;           /* reduce padding para no sumar altura extra */
   z-index: 1;

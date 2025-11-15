@@ -3,6 +3,7 @@ import { CommonModule, NgForOf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { FichajesService, FichajeCreateDto, FichajeDto } from '../../services/fichajes.service';
+import { AuthService } from '../../services/auth.service';
 
 type PunchType = 'Entrada' | 'Salida';
 type LastPressed = 'ENTRADA' | 'SALIDA';
@@ -26,6 +27,7 @@ interface HistoryItem {
 export class Fichaje implements AfterViewInit, OnDestroy {
   private api = inject(FichajesService);
   private msg = inject(NzMessageService);
+  private auth = inject(AuthService);
 
   // … (tus propiedades tal cual)
   lastType: string = '—';
@@ -77,6 +79,12 @@ export class Fichaje implements AfterViewInit, OnDestroy {
 
     this.updateClock();
     this.clockIntervalId = setInterval(() => this.updateClock(), 1000);
+
+    // Load fichajes for the authenticated worker from backend (if logged in)
+      // If user is authenticated, fetch remote fichajes.
+      if (this.auth.hasToken()) {
+        this.loadRemoteFichajes();
+      }
   }
 
   ngAfterViewInit(): void {}
@@ -180,6 +188,53 @@ export class Fichaje implements AfterViewInit, OnDestroy {
 
     this.filteredGroups = groups;
     this.filteredTotalMs = overall;
+  }
+
+  /**
+   * Load fichajes from backend. If user is Admin, load all fichajes; otherwise load only 'mis fichajes'.
+   * Replaces local history with server data (the canonical source).
+   */
+  loadRemoteFichajes(limit?: number) {
+    const isAdmin = this.auth.rol === 'Admin';
+    const obs = isAdmin ? this.api.todos() : this.api.misFichajes(limit);
+    obs.subscribe({
+      next: (rows: FichajeDto[]) => {
+        this.history = rows.map((r) => ({
+          id: r.id,
+          type: r.tipo === 'Entrada' ? 'Entrada' : 'Salida',
+          date: new Date(r.fechaHora).toLocaleDateString('es-ES'),
+          time: new Date(r.fechaHora).toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+          ts: r.fechaHora,
+          incidence: r.observacion ?? undefined,
+        } as HistoryItem));
+        this.saveHistory();
+        this.updateLastFromHistory();
+        if (isAdmin) {
+          this.msg.info(`Cargados ${rows.length} fichajes (admin)`);
+        }
+      },
+      error: () => this.msg.error('No se pudieron cargar los fichajes desde el servidor'),
+    });
+  }
+
+  private updateLastFromHistory() {
+    const last = this.history[this.history.length - 1];
+    if (last) {
+      this.lastType = last.type;
+      this.lastDate = last.date;
+      this.lastTime = last.time;
+      if (last.type === 'Entrada') {
+        this.entradaDisabled = true;
+        this.salidaDisabled = false;
+      } else {
+        this.entradaDisabled = false;
+        this.salidaDisabled = true;
+      }
+    }
   }
 
   // ---------- Fichar ----------
