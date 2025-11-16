@@ -1,0 +1,300 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    MANUAL DE CÓDIGO - FICHAJEAPP (PARTE 5)
+            GUARDS, INTERCEPTOR, CONFIGURACIÓN Y ARCHIVOS PRINCIPALES
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/guards/auth.guard.ts                                       │
+│ DESCRIPCIÓN: Guard para proteger rutas que requieren autenticación          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { inject } from '@angular/core';
+import { CanMatchFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const authGuard: CanMatchFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.hasToken()) return true;
+  router.navigateByUrl('/login', { replaceUrl: true });
+  return false;
+};
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/guards/admin.guard.ts                                      │
+│ DESCRIPCIÓN: Guard para proteger rutas exclusivas de administradores        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { inject } from '@angular/core';
+import { CanMatchFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+export const adminGuard: CanMatchFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  let isAdmin = false;
+  auth.isAdmin$.subscribe(v => isAdmin = v).unsubscribe();
+  if (isAdmin) return true;
+  router.navigateByUrl('/', { replaceUrl: true });
+  return false;
+};
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/core/auth.interceptor.ts                                   │
+│ DESCRIPCIÓN: Interceptor HTTP para agregar el token JWT a las peticiones    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+// src/app/core/auth.interceptor.ts
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+
+export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn) => {
+  const tok = localStorage.getItem('jwt_token');
+  return next(tok ? req.clone({ setHeaders: { Authorization: `Bearer ${tok}` } }) : req);
+};
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/app.ts                                                     │
+│ DESCRIPCIÓN: Componente raíz de la aplicación con gestión de layout         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { Component, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterOutlet } from '@angular/router';
+import { Header } from "./components/header/header";
+import { Footer } from './components/footer/footer';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, Header, Footer],
+  templateUrl: './app.html',
+  styleUrls: ['./app.scss']
+})
+export class App {
+  private resizeHandler: any;
+
+  constructor(public router: Router) {
+    // bind handler so we can remove later
+    this.resizeHandler = () => this.updateCssVars();
+  }
+
+  ngAfterViewInit(): void {
+    // initial set after view is ready
+    // small timeout to allow header/footer to render
+    setTimeout(() => this.updateCssVars(), 50);
+    window.addEventListener('resize', this.resizeHandler);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.resizeHandler);
+  }
+
+  private updateCssVars(): void {
+    try {
+      const doc = document.documentElement;
+      const headerEl = document.querySelector('header');
+      const footerEl = document.querySelector('footer');
+      const headerH = headerEl ? Math.ceil(headerEl.getBoundingClientRect().height) : 0;
+      const footerH = footerEl ? Math.ceil(footerEl.getBoundingClientRect().height) : 0;
+      if (doc && doc.style) {
+        doc.style.setProperty('--app-header-height', `${headerH}px`);
+        doc.style.setProperty('--app-footer-height', `${footerH}px`);
+      }
+    } catch (e) {
+      // silently ignore in environments where document isn't available
+      // console.warn(e);
+    }
+  }
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/app.routes.ts                                              │
+│ DESCRIPCIÓN: Configuración de rutas de la aplicación con guards             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+// src/app/app.routes.ts
+import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
+
+import { Login } from './pages/login/login';
+import { Registro } from './pages/registro/registro';
+import { Privacidad } from './pages/privacidad/privacidad';
+import { Ausencias } from './pages/ausencias/ausencias';
+import { Contacto } from './pages/contacto/contacto';
+import { Fichaje } from './pages/fichaje/fichaje';
+
+export const routes: Routes = [
+  { path: 'login', component: Login },
+
+  // protegidas (requieren token)
+  { path: 'fichaje',   component: Fichaje,   canMatch: [authGuard] },
+  { path: 'ausencias', component: Ausencias, canMatch: [authGuard] },
+
+  // solo admin
+  { path: 'registro',  component: Registro,  canMatch: [authGuard, adminGuard] },
+
+  // públicas
+  { path: 'privacidad', component: Privacidad },
+  { path: 'contacto',   component: Contacto },
+  { path: 'contacto.html', redirectTo: 'contacto', pathMatch: 'full' },
+
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: '' }
+];
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/app.config.ts                                              │
+│ DESCRIPCIÓN: Configuración principal de la aplicación Angular               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
+
+import { routes } from './app.routes';
+import { es_ES, provideNzI18n } from 'ng-zorro-antd/i18n';
+import { registerLocaleData } from '@angular/common';
+import es from '@angular/common/locales/es';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideHttpClient } from '@angular/common/http';
+
+registerLocaleData(es);
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes), provideNzI18n(es_ES), provideAnimationsAsync(), provideHttpClient()
+  ]
+};
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/app.html                                                   │
+│ DESCRIPCIÓN: Template HTML del componente raíz                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```html
+<!-- src/app/app.html -->
+<app-header></app-header>
+<main class="main-content">
+  <router-outlet />
+</main>
+<app-footer></app-footer>
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/app.scss                                                   │
+│ DESCRIPCIÓN: Estilos SCSS del componente raíz                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```scss
+:host {
+  display: block;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: var(--app-header-height, 120px);
+  padding-bottom: var(--app-footer-height, 60px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/main.ts                                                        │
+│ DESCRIPCIÓN: Archivo de arranque de la aplicación Angular                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { appConfig } from './app/app.config';
+import { App } from './app/app';
+
+bootstrapApplication(App, appConfig)
+  .catch((err) => console.error(err));
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: proxy.conf.json                                                    │
+│ DESCRIPCIÓN: Configuración del proxy para desarrollo (conexión con la API)  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```json
+{
+  "/api": {
+    "target": "http://localhost:7286",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}
+```
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DE PARTE 5 - CONFIGURACIÓN Y ARCHIVOS PRINCIPALES
+═══════════════════════════════════════════════════════════════════════════════
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                           RESUMEN DEL MANUAL COMPLETO
+═══════════════════════════════════════════════════════════════════════════════
+
+PARTE 1 (MANUAL_CODIGO_COMPLETO.txt):
+  - Registro: registro.ts, registro.html, registro.scss
+  - Ausencias: ausencias.ts, ausencias.html, ausencias.scss
+
+PARTE 2 (MANUAL_CODIGO_PARTE2_FICHAJE_LOGIN.txt):
+  - Fichaje: fichaje.ts, fichaje.html, fichaje.scss
+  - Login: login.ts, login.html, login.scss
+
+PARTE 3 (MANUAL_CODIGO_PARTE3_COMPONENTES.txt):
+  - Contacto: contacto.ts, contacto.html, contacto.scss
+  - Privacidad: privacidad.ts, privacidad.html, privacidad.scss
+  - Header: header.ts, header.html, header.scss
+  - Footer: footer.ts, footer.html, footer.scss
+
+PARTE 4 (MANUAL_CODIGO_PARTE4_SERVICIOS.txt):
+  - auth.service.ts
+  - empleados.service.ts
+  - fichajes.service.ts
+  - ausencias.service.ts
+
+PARTE 5 (MANUAL_CODIGO_PARTE5_CONFIGURACION.txt):
+  - auth.guard.ts
+  - admin.guard.ts
+  - auth.interceptor.ts
+  - app.ts
+  - app.routes.ts
+  - app.config.ts
+  - app.html
+  - app.scss
+  - main.ts
+  - proxy.conf.json
+
+TOTAL DE ARCHIVOS DOCUMENTADOS: 35 archivos
+
+ESTRUCTURA DE LA APLICACIÓN:
+- 6 páginas principales (Registro, Ausencias, Fichaje, Login, Contacto, Privacidad)
+- 2 componentes compartidos (Header, Footer)
+- 4 servicios para la capa de datos
+- 2 guards para protección de rutas
+- 1 interceptor HTTP para autenticación
+- Archivos de configuración y arranque
+
+═══════════════════════════════════════════════════════════════════════════════

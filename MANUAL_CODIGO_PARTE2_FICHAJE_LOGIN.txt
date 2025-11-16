@@ -1,0 +1,1008 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    MANUAL DE CÓDIGO - FICHAJEAPP (PARTE 2)
+                     COMPONENTES: FICHAJE Y LOGIN
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/fichaje/fichaje.ts                                   │
+│ DESCRIPCIÓN: Componente para registro de fichajes (entrada/salida),         │
+│              gestión de incidencias y visualización de resultados            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { Component, OnDestroy, AfterViewInit, inject } from '@angular/core';
+import { CommonModule, NgForOf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { FichajesService, FichajeCreateDto, FichajeDto } from '../../services/fichajes.service';
+import { AuthService } from '../../services/auth.service';
+
+type PunchType = 'Entrada' | 'Salida';
+type LastPressed = 'ENTRADA' | 'SALIDA';
+
+interface HistoryItem {
+  id?: string;
+  type: PunchType;
+  date: string;
+  time: string;
+  ts: string;
+  incidence?: string;
+}
+
+@Component({
+  selector: 'app-fichaje',
+  standalone: true,
+  imports: [CommonModule, FormsModule, NgForOf],
+  templateUrl: './fichaje.html',
+  styleUrls: ['./fichaje.scss'],
+})
+export class Fichaje implements AfterViewInit, OnDestroy {
+  private api = inject(FichajesService);
+  private msg = inject(NzMessageService);
+  private auth = inject(AuthService);
+
+  lastType: string = '—';
+  lastDate: string = '';
+  lastTime: string = '';
+
+  currentTime: string = '';
+
+  entradaDisabled = false;
+  salidaDisabled = true;
+
+  history: HistoryItem[] = [];
+  private storageKey = 'fichaje_history_v1';
+
+  lastPressed: LastPressed | null = null;
+  private lastEntryIndex: number | null = null;
+  private lastExitIndex: number | null = null;
+
+  filterStart: string = '';
+  filterEnd: string = '';
+
+  incidenceText: string = '';
+
+  filteredGroups: Array<{
+    date: string;
+    pairs: Array<{ entrada: HistoryItem | null; salida: HistoryItem | null; durationMs: number }>;
+    totalMs: number;
+  }> = [];
+  filteredTotalMs: number = 0;
+
+  private clockIntervalId: any = null;
+
+  constructor() {
+    this.loadHistory();
+
+    const last = this.history[this.history.length - 1];
+    if (last) {
+      this.lastType = last.type;
+      this.lastDate = last.date;
+      this.lastTime = last.time;
+      if (last.type === 'Entrada') {
+        this.entradaDisabled = true;
+        this.salidaDisabled = false;
+      } else {
+        this.entradaDisabled = false;
+        this.salidaDisabled = true;
+      }
+    }
+
+    this.updateClock();
+    this.clockIntervalId = setInterval(() => this.updateClock(), 1000);
+
+    if (this.auth.hasToken()) {
+      this.loadRemoteFichajes();
+    }
+  }
+
+  ngAfterViewInit(): void {}
+  ngOnDestroy(): void {
+    if (this.clockIntervalId) clearInterval(this.clockIntervalId);
+  }
+
+  private updateClock() {
+    const now = new Date();
+    this.currentTime = now.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  }
+
+  private findLastIndex(kind: 'Entrada' | 'Salida'): number | null {
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      if (this.history[i].type === kind) return i;
+    }
+    return null;
+  }
+
+  applyFilter() {
+    if (!this.filterStart || !this.filterEnd) {
+      this.filteredGroups = [];
+      this.filteredTotalMs = 0;
+      return;
+    }
+
+    const start = new Date(this.filterStart + 'T00:00:00');
+    const end = new Date(this.filterEnd + 'T23:59:59.999');
+
+    const items = this.history
+      .filter((h) => {
+        const t = new Date(h.ts);
+        return t >= start && t <= end;
+      })
+      .sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+
+    const byDate = new Map<string, HistoryItem[]>();
+    for (const it of items) {
+      const d = new Date(it.ts).toLocaleDateString('es-ES');
+      if (!byDate.has(d)) byDate.set(d, []);
+      byDate.get(d)!.push(it);
+    }
+
+    const groups: Array<{
+      date: string;
+      pairs: Array<{ entrada: HistoryItem | null; salida: HistoryItem | null; durationMs: number }>;
+      totalMs: number;
+    }> = [];
+    let overall = 0;
+
+    const orderedDates = Array.from(byDate.keys()).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    );
+    for (const d of orderedDates) {
+      const arr = byDate.get(d)!;
+
+      const pairs: Array<{
+        entrada: HistoryItem | null;
+        salida: HistoryItem | null;
+        durationMs: number;
+      }> = [];
+      let pendingEntrada: HistoryItem | null = null;
+
+      for (const it of arr) {
+        if (it.type === 'Entrada') {
+          if (pendingEntrada) {
+            pairs.push({ entrada: pendingEntrada, salida: null, durationMs: 0 });
+          }
+          pendingEntrada = it;
+        } else {
+          if (pendingEntrada) {
+            const dur = new Date(it.ts).getTime() - new Date(pendingEntrada.ts).getTime();
+            pairs.push({ entrada: pendingEntrada, salida: it, durationMs: Math.max(dur, 0) });
+            pendingEntrada = null;
+          } else {
+            pairs.push({ entrada: null, salida: it, durationMs: 0 });
+          }
+        }
+      }
+
+      if (pendingEntrada) {
+        pairs.push({ entrada: pendingEntrada, salida: null, durationMs: 0 });
+      }
+
+      const totalMs = pairs.reduce((acc, p) => acc + (p.durationMs || 0), 0);
+      overall += totalMs;
+      groups.push({ date: d, pairs, totalMs });
+    }
+
+    this.filteredGroups = groups;
+    this.filteredTotalMs = overall;
+  }
+
+  loadRemoteFichajes(limit?: number) {
+    const isAdmin = this.auth.rol === 'Admin';
+    const obs = isAdmin ? this.api.todos() : this.api.misFichajes(limit);
+    obs.subscribe({
+      next: (rows: FichajeDto[]) => {
+        this.history = rows.map((r) => ({
+          id: r.id,
+          type: r.tipo === 'Entrada' ? 'Entrada' : 'Salida',
+          date: new Date(r.fechaHora).toLocaleDateString('es-ES'),
+          time: new Date(r.fechaHora).toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+          ts: r.fechaHora,
+          incidence: r.observacion ?? undefined,
+        } as HistoryItem));
+        this.saveHistory();
+        this.updateLastFromHistory();
+        if (isAdmin) {
+          this.msg.info(\`Cargados \${rows.length} fichajes (admin)\`);
+        }
+      },
+      error: () => this.msg.error('No se pudieron cargar los fichajes desde el servidor'),
+    });
+  }
+
+  private updateLastFromHistory() {
+    const last = this.history[this.history.length - 1];
+    if (last) {
+      this.lastType = last.type;
+      this.lastDate = last.date;
+      this.lastTime = last.time;
+      if (last.type === 'Entrada') {
+        this.entradaDisabled = true;
+        this.salidaDisabled = false;
+      } else {
+        this.entradaDisabled = false;
+        this.salidaDisabled = true;
+      }
+    }
+  }
+
+  fichar(type: 'ENTRADA' | 'SALIDA') {
+    const now = new Date();
+    const date = now.toLocaleDateString('es-ES');
+    const time = now.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    const iso = now.toISOString();
+
+    if (type === 'ENTRADA') {
+      const entry: HistoryItem = { type: 'Entrada', date, time, ts: iso };
+      this.history.push(entry);
+      this.lastEntryIndex = this.history.length - 1;
+      this.lastPressed = 'ENTRADA';
+
+      this.lastType = 'Entrada';
+      this.lastDate = date;
+      this.lastTime = time;
+
+      this.entradaDisabled = true;
+      this.salidaDisabled = false;
+      this.saveHistory();
+
+      const dto: FichajeCreateDto = { tipo: 'Entrada', fechaHora: iso };
+      this.api.crear(dto).subscribe({
+        next: (res: FichajeDto) => {
+          this.history[this.lastEntryIndex!].id = res.id;
+          this.saveHistory();
+        },
+        error: () => this.msg.error('No se pudo registrar la Entrada en servidor'),
+      });
+    } else {
+      const exit: HistoryItem = { type: 'Salida', date, time, ts: iso };
+      this.history.push(exit);
+      this.lastExitIndex = this.history.length - 1;
+      this.lastPressed = 'SALIDA';
+
+      this.lastType = 'Salida';
+      this.lastDate = date;
+      this.lastTime = time;
+
+      this.entradaDisabled = false;
+      this.salidaDisabled = true;
+      this.saveHistory();
+
+      const dto: FichajeCreateDto = { tipo: 'Salida', fechaHora: iso };
+      this.api.crear(dto).subscribe({
+        next: (res: FichajeDto) => {
+          this.history[this.lastExitIndex!].id = res.id;
+          this.saveHistory();
+        },
+        error: () => this.msg.error('No se pudo registrar la Salida en servidor'),
+      });
+    }
+  }
+
+  registerIncidentNow() {
+    const text = (this.incidenceText || '').trim();
+    if (!text) return;
+
+    let idx: number | null = null;
+    if (this.lastPressed === 'ENTRADA') {
+      idx = this.lastEntryIndex ?? this.findLastIndex('Entrada');
+    } else if (this.lastPressed === 'SALIDA') {
+      idx = this.lastExitIndex ?? this.findLastIndex('Salida');
+    } else {
+      idx = this.findLastIndex('Entrada') ?? this.findLastIndex('Salida');
+    }
+
+    if (idx == null || idx < 0) return;
+
+    this.history[idx].incidence = text;
+    this.saveHistory();
+    this.incidenceText = '';
+
+    const id = this.history[idx].id;
+    if (id) {
+      this.api.actualizarObservacion(id, text).subscribe({
+        next: () => this.msg.success('Incidencia guardada'),
+        error: () => this.msg.error('No se pudo guardar la incidencia en el servidor'),
+      });
+    } else {
+      this.msg.warning('Incidencia guardada localmente (pendiente de sincronizar)');
+    }
+  }
+
+  private saveHistory() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+    } catch {}
+  }
+
+  private loadHistory() {
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      this.history = raw ? (JSON.parse(raw) as HistoryItem[]) : [];
+    } catch {
+      this.history = [];
+    }
+  }
+
+  msToHhMm(ms: number) {
+    const totalSec = Math.floor((ms || 0) / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    return \`\${h}h \${m}m\`;
+  }
+}
+```
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/fichaje/fichaje.html                                 │
+│ DESCRIPCIÓN: Template HTML para registro de fichajes                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```html
+<div class="bg-dark d-flex align-items-start justify-content-center">
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12 mb-3">
+        <h1 class="display-4 text-center" style="color: #001529; font-size:30px;">
+          Registro Entrada / Salida
+        </h1>
+      </div>
+
+      <div class="col-12">
+        <div class="row gx-3 justify-content-center align-items-start">
+          <div class="col-12 col-md-3 d-flex flex-column">
+            <div id="leftControlsCard" class="card mt-1 shadow-sm left-controls h-100">
+              <div class="card-body text-center">
+
+                <div class="mb-3">
+                  <input type="text" class="form-control text-center fs-3" [value]="currentTime" readonly>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3 mb-3">
+                  <button id="btnEntrada" class="btn btn-success btn-lg"
+                          (click)="fichar('ENTRADA')" [disabled]="entradaDisabled">Entrada</button>
+                  <button id="btnSalida" class="btn btn-danger btn-lg"
+                          (click)="fichar('SALIDA')" [disabled]="salidaDisabled">Salida</button>
+                </div>
+
+                <div class="mt-3">
+                  <div class="card" id="lastFichajeCard">
+                    <div class="card-header bg-primary text-white text-center">Último fichaje</div>
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center last-row">
+                        <div class="text-center">
+                          <div class="small text-muted">Tipo</div>
+                          <div class="fw-bold">{{ lastType }}</div>
+                        </div>
+                        <div class="text-center">
+                          <div class="small text-muted">Fecha</div>
+                          <div class="fw-bold">{{ lastDate }}</div>
+                        </div>
+                      </div>
+                      <div class="text-center mt-2 small text-muted">Hora: {{ lastTime }}</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-3 d-flex flex-column">
+            <div id="filterCard" class="card mt-1 shadow-sm control-card h-100">
+              <div class="card-header bg-primary text-white text-center">Filtrar</div>
+              <div class="card-body">
+                <label class="form-label small">Fecha inicio</label>
+                <input type="date" class="form-control mb-2" [(ngModel)]="filterStart">
+
+                <label class="form-label small">Fecha fin</label>
+                <input type="date" class="form-control mb-2" [(ngModel)]="filterEnd">
+
+                <button class="btn btn-primary btn-lg w-100 mb-2" (click)="applyFilter()">Aplicar filtro</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 mt-3">
+        <div class="row">
+          <div class="col-12 col-md-6 offset-md-3 d-flex flex-column">
+            <div class="card">
+              <div class="card-header bg-danger text-white text-center">Registrar incidencia</div>
+              <div class="card-body d-flex flex-column">
+                <textarea class="form-control mb-3" rows="3"
+                          [(ngModel)]="incidenceText"
+                          placeholder="Describe la incidencia (se asignará al último fichaje de Entrada/Salida)"></textarea>
+                <div class="d-flex justify-content-end">
+                  <button class="btn btn-danger btn-lg" (click)="registerIncidentNow()">Registrar incidencia</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-3">
+              <div class="card-header bg-primary text-white text-center">Resultados</div>
+              <div class="card-body">
+
+                <div *ngIf="filteredGroups.length === 0" class="text-muted">
+                  No hay resultados para el filtro seleccionado.
+                </div>
+
+                <ng-container *ngIf="filteredGroups.length > 0">
+                  <div *ngFor="let g of filteredGroups" class="mb-3">
+                    <div class="fw-bold">{{ g.date }}</div>
+                    <ul class="list-group mb-2">
+                      <li *ngFor="let p of g.pairs" class="list-group-item result-row">
+
+                        <div class="result-col result-start" *ngIf="p.entrada; else noEntrada">
+                          <div class="small text-muted">Hora inicio</div>
+                          <div class="result-value">{{ p.entrada.time || '-' }}</div>
+                        </div>
+                        <ng-template #noEntrada>
+                          <div class="result-col result-start">
+                            <div class="small text-muted">Hora inicio</div>
+                            <div class="result-value">-</div>
+                          </div>
+                        </ng-template>
+
+                        <div class="result-col result-end" *ngIf="p.salida; else noSalida">
+                          <div class="small text-muted">Hora fin</div>
+                          <div class="result-value">{{ p.salida.time || '-' }}</div>
+                        </div>
+                        <ng-template #noSalida>
+                          <div class="result-col result-end">
+                            <div class="small text-muted">Hora fin</div>
+                            <div class="result-value">-</div>
+                          </div>
+                        </ng-template>
+
+                        <div class="result-col result-duration">
+                          <div class="small text-muted">Duración</div>
+                          <div class="result-value">{{ msToHhMm(p.durationMs) }}</div>
+                        </div>
+
+                        <div class="result-col result-incidence entrada">
+                          <div class="small text-muted">Incidencia entrada</div>
+                          <div class="result-value">{{ (p.entrada?.incidence || '-') }}</div>
+                        </div>
+
+                        <div class="result-col result-incidence salida">
+                          <div class="small text-muted">Incidencia salida</div>
+                          <div class="result-value">{{ (p.salida?.incidence || '-') }}</div>
+                        </div>
+
+                      </li>
+                    </ul>
+
+                    <div class="text-end small">Total día: {{ msToHhMm(g.totalMs) }}</div>
+                  </div>
+
+                  <div class="mt-2 fw-bold">
+                    Total filtro: {{ msToHhMm(filteredTotalMs) }}
+                  </div>
+                </ng-container>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/fichaje/fichaje.scss                                 │
+│ DESCRIPCIÓN: Estilos SCSS para el componente de fichajes                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```scss
+:host {
+  display: block;
+  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
+  padding: 0 1rem;
+}
+
+h1 {
+  color: black;
+  margin-top: 80px;
+  margin-bottom: 80px;
+  text-align: center;
+}
+
+.container-fluid.py-4 {
+  color: #000;
+  padding-bottom: 1rem;
+}
+
+.container {
+  margin-top: 40px;
+  text-align: center;
+  background-color: transparent;
+}
+
+:host .bg-dark,
+:host body.bg-dark {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.control-card,
+.left-controls {
+  min-height: var(--top-cards-height, 140px);
+  height: var(--top-cards-height, auto);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.flex-grow-1 {
+  display: flex;
+  flex-direction: column;
+}
+
+.card.mt-3.shadow-sm.flex-grow-1 .card-body {
+  overflow: auto;
+}
+
+.list-group-item > div:last-child {
+  min-width: 120px;
+  max-width: 220px;
+  word-break: break-word;
+}
+
+.row.gx-3.justify-content-center {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  #leftControlsCard,
+  #filterCard {
+    flex: 0 1 auto;
+    width: 30%;
+    min-width: 280px;
+    max-width: 36rem;
+  }
+
+  .card[style*="width:50%"],
+  .centered-width {
+    width: calc(60vw - 1rem);
+    max-width: 1100px;
+    min-width: 560px;
+  }
+
+  .top-row {
+    justify-content: center;
+  }
+
+  .top-row > .col-md-6 {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 0 0 45%;
+    max-width: 45%;
+  }
+}
+
+.result-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.result-col {
+  min-width: 0;
+}
+.result-col .result-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.result-start .result-value,
+.result-end .result-value,
+.result-duration .result-value {
+  white-space: nowrap;
+}
+
+.result-incidence .result-value {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.list-group,
+.list-group-item {
+  width: 100%;
+  box-sizing: border-box;
+}
+.list-group-item {
+  overflow: hidden;
+}
+
+.result-col .result-value {
+  overflow-wrap: anywhere;
+}
+
+.result-start, .result-end { min-width: 100px; }
+.result-duration { min-width: 120px; }
+.result-incidence { min-width: 160px; max-width: 420px; }
+
+.result-start, .result-end { flex: 0 0 18%; }
+.result-duration { flex: 0 0 14%; }
+.result-incidence { flex: 1 1 30%; }
+
+@media (max-width: 992px) {
+  .result-start, .result-end { flex: 0 0 45%; }
+  .result-duration { flex: 0 0 45%; }
+  .result-incidence { flex: 1 1 100%; }
+}
+
+@media (max-width: 767.98px) {
+  #leftControlsCard,
+  #filterCard {
+    flex: 0 1 100%;
+    max-width: 100%;
+  }
+
+  .card[style*="width:50%"] {
+    width: 100% !important;
+    max-width: none;
+  }
+
+  .result-start, .result-end, .result-duration { flex: 0 0 50%; }
+  .result-incidence { flex: 1 1 100%; }
+
+  .result-incidence .result-value {
+    overflow: visible;
+    word-break: break-word;
+    white-space: normal;
+  }
+}
+
+@media (min-width: 1200px) {
+  .result-row {
+    display: grid;
+    grid-template-columns: 140px 140px 160px minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 0.9rem 1.2rem;
+    align-items: center;
+  }
+
+  .col-md-6.offset-md-3.d-flex.flex-column {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+
+  .col-md-6.offset-md-3.d-flex.flex-column > .card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .col-md-6.offset-md-3.d-flex.flex-column > .card .card-body {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 1199px) {
+  .row.gx-3.justify-content-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .row.gx-3.justify-content-center > .col-12.col-md-6.offset-md-3.d-flex.flex-column {
+    order: 1;
+    flex: 0 0 100%;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .row.gx-3.justify-content-center > .col-12.col-md-3 {
+    order: 2;
+    flex: 0 0 100%;
+    max-width: 520px;
+    width: 100%;
+    padding: 0 12px;
+    margin: 12px auto 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+
+  .row.gx-3.justify-content-center .card {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+}
+
+.result-start,
+.result-end {
+  width: 100px;
+}
+.result-duration {
+  width: 120px;
+}
+
+.card {
+  transition: width 300ms ease, height 300ms ease;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  color: #fff !important;
+}
+
+.card-header.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+.card-header.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.card.mt-3:last-of-type {
+  margin-bottom: 80px;
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/login/login.ts                                       │
+│ DESCRIPCIÓN: Componente de inicio de sesión con validación y redirección    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+// src/app/pages/login/login.ts
+import { Component, inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { finalize } from 'rxjs/operators';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [ReactiveFormsModule, NzButtonModule, NzFormModule, NzInputModule],
+  templateUrl: './login.html',
+  styleUrls: ['./login.scss'],
+})
+export class Login implements OnInit {
+  validateForm: FormGroup;
+  loading = false;
+
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private msg = inject(NzMessageService);
+  private auth = inject(AuthService);
+
+  constructor() {
+    this.validateForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      contrasena: ['', [Validators.required, Validators.minLength(6)]],
+    });
+  }
+
+  ngOnInit(): void {
+    if (this.auth.hasToken()) {
+      this.router.navigateByUrl('/');
+    }
+  }
+
+  submitForm(): void {
+    if (this.validateForm.invalid) {
+      Object.values(this.validateForm.controls).forEach(c => {
+        c.markAsDirty();
+        c.updateValueAndValidity();
+      });
+      return;
+    }
+
+    const { email, contrasena } = this.validateForm.value;
+    this.loading = true;
+
+    this.http.post<{ token: string; rol: string; empleadoId: number }>(
+      '/api/auth/login',
+      { email, contrasena }
+    )
+    .pipe(finalize(() => this.loading = false))
+    .subscribe({
+      next: (res) => {
+        this.auth.setAuth(res.token, res.rol, res.empleadoId);
+
+        this.msg.success('Sesión iniciada');
+
+        if (res.rol === 'Admin') {
+          this.router.navigateByUrl('/registro');
+        } else {
+          this.router.navigateByUrl('/fichaje');
+        }
+      },
+      error: (err) => {
+        this.msg.error(err?.status === 401 ? 'Credenciales inválidas' : 'Error de conexión');
+      }
+    });
+  }
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/login/login.html                                     │
+│ DESCRIPCIÓN: Template HTML del formulario de inicio de sesión               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```html
+<div class="col-12 mb-3 text-center">
+  <h1 style="color:#001529;font-size:30px;">¡Le damos la bienvenida!</h1>
+  <h3 style="color:#001529;font-size:20px;">Por favor, inicie sesión para continuar.</h3>
+</div>
+
+<div class="login-container">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form nz-form [formGroup]="validateForm" class="login-form" (ngSubmit)="submitForm()" novalidate>
+        <nz-form-item>
+          <nz-form-label>Correo electrónico</nz-form-label>
+          <nz-form-control nzErrorTip="Ingrese un correo válido">
+            <nz-input-group>
+              <span nz-icon nzType="mail" nzTheme="outline"></span>
+              <input
+                nz-input
+                type="email"
+                formControlName="email"
+                placeholder="correo@empresa.com"
+                autocomplete="email"
+              />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label>Contraseña</nz-form-label>
+          <nz-form-control nzErrorTip="Ingrese su contraseña (mín. 6 caracteres)">
+            <nz-input-group>
+              <span nz-icon nzType="lock" nzTheme="outline"></span>
+              <input
+                nz-input
+                type="password"
+                formControlName="contrasena"
+                placeholder="Contraseña"
+                autocomplete="current-password"
+              />
+            </nz-input-group>
+          </nz-form-control>
+        </nz-form-item>
+
+        <button
+          nz-button
+          nzType="primary"
+          class="btn btn-primary btn-lg w-100 login-form-button"
+          htmlType="submit"
+          [nzLoading]="loading"
+          [disabled]="validateForm.invalid"
+        >
+          Ingresar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/login/login.scss                                     │
+│ DESCRIPCIÓN: Estilos SCSS para la página de login                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```scss
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
+  background: transparent;
+  padding: 0 16px;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  width: 100%;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  margin: 0;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+h1, h3 {
+  color: #001529;
+  text-align: center;
+  margin: 0 0 12px 0;
+}
+
+.login-form {
+  width: 100%;
+}
+
+.login-form-button {
+  width: 100%;
+  height: 50px;
+  font-weight: 500;
+}
+
+.login-form-margin {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 480px) {
+  .card-body {
+    padding: 20px;
+  }
+}
+```
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DE PARTE 2 - FICHAJE Y LOGIN
+═══════════════════════════════════════════════════════════════════════════════

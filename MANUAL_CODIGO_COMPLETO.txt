@@ -1,0 +1,1902 @@
+═══════════════════════════════════════════════════════════════════════════════
+                         MANUAL DE CÓDIGO - FICHAJEAPP
+                              FRONTEND ANGULAR
+═══════════════════════════════════════════════════════════════════════════════
+
+
+═══════════════════════════════════════════════════════════════════════════════
+1. COMPONENTES - PÁGINAS
+═══════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/registro/registro.ts                                 │
+│ DESCRIPCIÓN: Componente para registro, modificación y eliminación de        │
+│              empleados. Incluye validación de formularios y búsqueda.       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+// src/app/pages/registro/registro.ts
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+  FormsModule,
+} from '@angular/forms';
+import { Subject } from 'rxjs';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { EmpleadosService, CreateEmpleadoDto, UpdateEmpleadoDto, EmpleadoDto } from '../../services/empleados.service';
+import { finalize } from 'rxjs/operators';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { HttpErrorResponse } from '@angular/common/http';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-registro',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    NzFormModule,
+    NzInputModule,
+    NzCheckboxModule,
+    NzButtonModule,
+    NzSelectModule,
+    NzModalModule,
+    NzAutocompleteModule,
+    CommonModule,
+  ],
+  templateUrl: './registro.html',
+  styleUrls: ['./registro.scss'],
+})
+export class Registro implements OnInit, OnDestroy {
+  private fb = inject(NonNullableFormBuilder);
+  private destroy$ = new Subject<void>();
+  private api = inject(EmpleadosService);
+  private msg = inject(NzMessageService);
+
+  isConfirmVisible = false;
+  isSuccessVisible = false;
+  isUpdateSuccessVisible = false;
+  isDeleteSuccessVisible = false;
+  loading = false;
+  isUpdating = false;
+
+  datosConfirmados: any = {};
+  accion: 'crear' | 'actualizar' | 'eliminar' = 'crear';
+
+  empleados: EmpleadoDto[] = [];
+  empleadosFiltrados: EmpleadoDto[] = [];
+  busquedaEmpleado = '';
+  empleadoSeleccionado: EmpleadoDto | null = null;
+
+  validateForm = this.fb.group({
+    nombre: this.fb.control('', [Validators.required, Validators.minLength(3)]),
+    apellidos: this.fb.control('', [Validators.required, Validators.minLength(3)]),
+    dni: this.fb.control('', [
+      Validators.required,
+      Validators.minLength(9),
+      Validators.maxLength(9),
+    ]),
+    email: this.fb.control('', [Validators.email, Validators.required]),
+    password: this.fb.control('', [
+      Validators.required,
+      Validators.minLength(8),
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
+    ]),
+    phoneNumberPrefix: this.fb.control('+34'),
+    phoneNumber: this.fb.control('', [
+      Validators.required,
+      Validators.minLength(9),
+      Validators.pattern('^[0-9]{9}$'),
+    ]),
+    rol: this.fb.control('', [Validators.required, Validators.pattern(/^(admin|user)$/i)]),
+  });
+
+  ngOnInit(): void {
+    this.api.getAll().subscribe({
+      next: (data) => {
+        this.empleados = data;
+      },
+      error: () => {
+        this.msg.error('Error al cargar empleados');
+      },
+    });
+  }
+
+  onEmpleadoSearch(event: Event): void {
+    const input = (event.target as HTMLInputElement).value.toLowerCase();
+    this.busquedaEmpleado = input;
+    if (!input) {
+      this.empleadosFiltrados = [];
+      return;
+    }
+    this.empleadosFiltrados = this.empleados.filter(
+      (emp) =>
+        emp.nombre.toLowerCase().includes(input) ||
+        emp.apellidos.toLowerCase().includes(input) ||
+        emp.dni.toLowerCase().includes(input) ||
+        emp.email.toLowerCase().includes(input)
+    );
+  }
+
+  selectEmpleado(emp: EmpleadoDto): void {
+    this.empleadoSeleccionado = emp;
+    this.validateForm.patchValue({
+      nombre: emp.nombre,
+      apellidos: emp.apellidos,
+      dni: emp.dni,
+      email: emp.email,
+    });
+    this.busquedaEmpleado = '';
+    this.empleadosFiltrados = [];
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  submitForm(): void {
+    if (this.validateForm.valid) {
+      this.datosConfirmados = this.validateForm.value;
+      this.accion = 'crear';
+      this.isConfirmVisible = true;
+    } else {
+      Object.values(this.validateForm.controls).forEach((control) => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+    }
+  }
+
+  handleConfirmOk(): void {
+    if (this.accion === 'actualizar') {
+      this.handleUpdateOk();
+      return;
+    }
+
+    if (this.accion === 'eliminar') {
+      this.handleDeleteOk();
+      return;
+    }
+
+    this.isConfirmVisible = false;
+
+    const v = this.validateForm.getRawValue();
+    const rol = (v.rol || '').toString().toLowerCase() === 'admin' ? 'Admin' : 'User';
+    const telefonoRaw = `${v.phoneNumberPrefix ?? ''}${v.phoneNumber ?? ''}`.replace(/\s+/g, '');
+    const telefono = telefonoRaw.length ? telefonoRaw : null;
+
+    const dto: CreateEmpleadoDto = {
+      nombre: v.nombre!.trim(),
+      apellidos: v.apellidos!.trim(),
+      dni: v.dni!.trim().toUpperCase(),
+      email: v.email!.trim().toLowerCase(),
+      contrasena: v.password!,
+      telefono,
+      rol,
+    };
+
+    this.loading = true;
+
+    this.api
+      .create(dto)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.validateForm.enable();
+        })
+      )
+      .subscribe({
+        next: (res: EmpleadoDto) => {
+          this.msg.success(`Empleado ${res.nombre} creado`);
+          this.validateForm.reset();
+          this.validateForm.patchValue({ phoneNumberPrefix: '+34' });
+          this.empleadoSeleccionado = null;
+          this.busquedaEmpleado = '';
+          this.empleadosFiltrados = [];
+          this.isSuccessVisible = true;
+          this.api.getAll().subscribe({
+            next: (data) => {
+              this.empleados = data;
+            },
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err?.status === 409) {
+            this.msg.error('Ya existe un empleado con ese DNI o Email');
+          } else if (err?.status === 403 || err?.status === 401) {
+            this.msg.error('No autorizado. Debes iniciar sesión como Admin');
+          } else {
+            this.msg.error('Error al crear el empleado');
+          }
+        },
+      });
+  }
+
+  handleConfirmCancel(): void {
+    this.isConfirmVisible = false;
+  }
+
+  handleSuccessOk(): void {
+    this.isSuccessVisible = false;
+  }
+
+  handleUpdateSuccessOk(): void {
+    this.isUpdateSuccessVisible = false;
+    this.empleadoSeleccionado = null;
+    this.busquedaEmpleado = '';
+    this.empleadosFiltrados = [];
+    this.validateForm.reset();
+    this.validateForm.controls['phoneNumberPrefix'].setValue('+34');
+  }
+
+  handleDeleteSuccessOk(): void {
+    this.isDeleteSuccessVisible = false;
+    this.empleadoSeleccionado = null;
+    this.busquedaEmpleado = '';
+    this.empleadosFiltrados = [];
+    this.validateForm.reset();
+    this.validateForm.controls['phoneNumberPrefix'].setValue('+34');
+  }
+
+  updateEmpleado(): void {
+    if (!this.empleadoSeleccionado) {
+      this.msg.warning('Debes seleccionar un empleado para modificar');
+      return;
+    }
+
+    const v = this.validateForm.getRawValue();
+    const merged: any = {
+      nombre: this.empleadoSeleccionado.nombre,
+      apellidos: this.empleadoSeleccionado.apellidos,
+      dni: this.empleadoSeleccionado.dni,
+      email: this.empleadoSeleccionado.email,
+      phoneNumberPrefix: this.validateForm.controls['phoneNumberPrefix'].value || '+34',
+      phoneNumber: this.empleadoSeleccionado.telefono ?? '',
+      rol: this.empleadoSeleccionado.rol,
+    };
+
+    if (v.nombre && v.nombre.trim() !== '') merged.nombre = v.nombre.trim();
+    if (v.apellidos && v.apellidos.trim() !== '') merged.apellidos = v.apellidos.trim();
+    if (v.dni && v.dni.trim() !== '') merged.dni = v.dni.trim();
+    if (v.email && v.email.trim() !== '') merged.email = v.email.trim();
+    if (v.phoneNumber && v.phoneNumber.trim() !== '') merged.phoneNumber = v.phoneNumber.trim();
+    if (v.rol && v.rol.trim() !== '') merged.rol = v.rol.trim();
+
+    this.datosConfirmados = merged;
+    this.accion = 'actualizar';
+    this.isConfirmVisible = true;
+  }
+
+  handleUpdateOk(): void {
+    if (!this.empleadoSeleccionado) return;
+
+    this.isConfirmVisible = false;
+    this.isUpdating = true;
+    const v = this.validateForm.getRawValue();
+
+    const dto: UpdateEmpleadoDto = {};
+
+    const addIfChanged = (key: keyof UpdateEmpleadoDto, value: any) => {
+      if (value === undefined || value === null) return;
+      const existing = (this.empleadoSeleccionado as any)[key];
+      if (typeof value === 'string') {
+        if (value.trim() === '') return;
+      }
+      let normalizedNew = value;
+      let normalizedExisting = existing;
+      if (key === 'dni' && typeof value === 'string') normalizedNew = value.trim().toUpperCase();
+      if (key === 'email' && typeof value === 'string') normalizedNew = value.trim().toLowerCase();
+      if (key === 'nombre' && typeof value === 'string') normalizedNew = value.trim();
+      if (key === 'apellidos' && typeof value === 'string') normalizedNew = value.trim();
+
+      if (normalizedNew !== normalizedExisting) {
+        (dto as any)[key] = normalizedNew;
+      }
+    };
+
+    addIfChanged('nombre', v.nombre);
+    addIfChanged('apellidos', v.apellidos);
+    addIfChanged('dni', v.dni ? v.dni.toUpperCase() : undefined);
+    addIfChanged('email', v.email ? v.email.toLowerCase() : undefined);
+
+    const telefonoRaw = `${v.phoneNumberPrefix ?? ''}${v.phoneNumber ?? ''}`.replace(/\s+/g, '');
+    if (telefonoRaw) addIfChanged('telefono', telefonoRaw);
+
+    if (v.rol) addIfChanged('rol', (v.rol || '').toString());
+
+    if (v.password && v.password.trim()) {
+      addIfChanged('contrasena', v.password);
+    }
+
+    if (Object.keys(dto).length === 0) {
+      this.isUpdating = false;
+      this.msg.info('No hay cambios para actualizar');
+      this.empleadoSeleccionado = null;
+      this.busquedaEmpleado = '';
+      this.empleadosFiltrados = [];
+      this.validateForm.reset();
+      this.validateForm.controls['phoneNumberPrefix'].setValue('+34');
+      return;
+    }
+
+    this.api
+      .update(this.empleadoSeleccionado.id, dto)
+      .pipe(
+        finalize(() => {
+          this.isUpdating = false;
+        })
+      )
+      .subscribe({
+        next: (res: EmpleadoDto) => {
+          this.isUpdateSuccessVisible = true;
+          this.api.getAll().subscribe({
+            next: (data) => {
+              this.empleados = data;
+            },
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err?.status === 409) {
+            this.msg.error('Ya existe un empleado con ese DNI o Email');
+          } else if (err?.status === 403 || err?.status === 401) {
+            this.msg.error('No autorizado. Solo admins pueden actualizar empleados');
+          } else {
+            this.msg.error('Error al actualizar el empleado');
+          }
+        },
+      });
+  }
+
+  handleDeleteOk(): void {
+    if (!this.empleadoSeleccionado) return;
+
+    this.isConfirmVisible = false;
+    this.loading = true;
+
+    this.api
+      .delete(this.empleadoSeleccionado.id)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.isDeleteSuccessVisible = true;
+          this.api.getAll().subscribe({
+            next: (data) => {
+              this.empleados = data;
+            },
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err?.status === 403 || err?.status === 401) {
+            this.msg.error('No autorizado. Solo admins pueden eliminar empleados');
+          } else {
+            this.msg.error('Error al eliminar el empleado');
+          }
+        },
+      });
+  }
+
+  deleteEmpleado(): void {
+    if (!this.empleadoSeleccionado) {
+      this.msg.warning('Debes seleccionar un empleado para eliminar');
+      return;
+    }
+
+    this.datosConfirmados = {
+      nombre: this.empleadoSeleccionado.nombre,
+      apellidos: this.empleadoSeleccionado.apellidos,
+      dni: this.empleadoSeleccionado.dni,
+      email: this.empleadoSeleccionado.email,
+      phoneNumber: this.empleadoSeleccionado.telefono ?? '',
+    };
+    this.accion = 'eliminar' as any;
+    this.isConfirmVisible = true;
+  }
+
+  confirmationValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return { required: true };
+    if (control.value !== this.validateForm.controls.password.value)
+      return { confirm: true, error: true };
+    return null;
+  }
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/registro/registro.html                               │
+│ DESCRIPCIÓN: Template HTML del formulario de registro de empleados          │
+└─────────────────────────────────────────────────────────────────────────────┘
+```html
+<div class="formulario-registro">
+  <div class="col-12 mb-3">
+    <h1 class="display-4 text-center" style="color: #001529; font-size: 30px">
+      Registro Empleados
+    </h1>
+  </div>
+
+  <div class="registro-container">
+    <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="busquedaEmpleado">Buscar Empleado</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24">
+          <input
+            nz-input
+            id="busquedaEmpleado"
+            [(ngModel)]="busquedaEmpleado"
+            [ngModelOptions]="{standalone: true}"
+            (input)="onEmpleadoSearch($event)"
+            placeholder="Buscar por nombre, apellidos, DNI o email"
+            autocomplete="off"
+          />
+          @if (empleadosFiltrados.length > 0) {
+          <div class="employee-dropdown">
+            @for (emp of empleadosFiltrados; track emp.id) {
+            <div class="employee-item" (click)="selectEmpleado(emp)">
+              <strong>{{ emp.nombre }} {{ emp.apellidos }}</strong> <br />
+              <small>{{ emp.dni }} - {{ emp.email }}</small>
+            </div>
+            }
+          </div>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="nombre">Nombre</nz-form-label>
+        <nz-form-control
+          [nzSm]="14"
+          [nzXs]="24"
+          nzErrorTip="El nombre debe tener al menos 3 caracteres!"
+        >
+          <input nz-input formControlName="nombre" id="nombre" autocomplete="off" />
+          @if (validateForm.get('nombre')?.errors?.['required'] &&
+          validateForm.get('nombre')?.touched) {
+          <span> El nombre no puede quedar vacío</span>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="apellidos">Apellidos</nz-form-label>
+        <nz-form-control
+          [nzSm]="14"
+          [nzXs]="24"
+          nzErrorTip="Los apellidos deben tener al menos 3 caracteres!"
+        >
+          <input nz-input formControlName="apellidos" id="apellidos" autocomplete="off" />
+          @if (validateForm.get('apellidos')?.errors?.['required'] &&
+          validateForm.get('apellidos')?.touched) {
+          <span> Los apellidos no pueden quedar vacíos</span>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="dni">DNI</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El DNI debe tener 9 caracteres!">
+          <input nz-input formControlName="dni" id="dni" autocomplete="off" />
+          @if (validateForm.get('dni')?.errors?.['required'] && validateForm.get('dni')?.touched) {
+          <span> El DNI no puede quedar vacío</span>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="email">E-mail</nz-form-label>
+        <nz-form-control
+          [nzSm]="14"
+          [nzXs]="24"
+          nzErrorTip="El correo electrónico no es válido! (micorreo@example.com)"
+        >
+          <input nz-input formControlName="email" id="email" autocomplete="off" />
+          @if (validateForm.get('email')?.errors?.['required'] &&
+          validateForm.get('email')?.touched) {
+          <span> El correo electrónico no puede quedar vacío</span>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="password" nzRequired>Contraseña</nz-form-label>
+        <nz-form-control
+          [nzSm]="14"
+          [nzXs]="24"
+          nzErrorTip="La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial!"
+        >
+          <input
+            nz-input
+            type="password"
+            id="password"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          @if (validateForm.get('password')?.invalid && validateForm.get('password')?.touched) {
+          <span> La contraseña no puede quedar vacía</span>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="phoneNumber" nzRequired
+          >Teléfono</nz-form-label
+        >
+        <nz-form-control
+          [nzSm]="14"
+          [nzXs]="24"
+          [nzValidateStatus]="validateForm.controls['phoneNumber']"
+          nzErrorTip="El teléfono debe tener 9 números"
+        >
+          <nz-input-group nzAddOnBefore="+34">
+            <input
+              nz-input
+              id="phoneNumber"
+              formControlName="phoneNumber"
+              placeholder="Número de teléfono"
+              autocomplete="off"
+            />
+            @if (validateForm.get('phoneNumber')?.errors?.['required'] &&
+            validateForm.get('phoneNumber')?.touched) {
+            <span> El número de teléfono no puede quedar vacío</span>
+            }
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="rol">Rol</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El rol no es válido!">
+          <input nz-input formControlName="rol" id="rol" autocomplete="off" />
+          @if (validateForm.get('rol')?.errors?.['required'] && validateForm.get('rol')?.touched) {
+          <span> El rol no puede quedar vacío</span>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nz-row class="register-area">
+        <nz-form-control [nzSpan]="14" [nzOffset]="6">
+          <div class="actions-row">
+            <button type="submit" class="btn btn-primary btn-lg action-btn" [disabled]="loading">Registrar</button>
+
+            <button
+              type="button"
+              class="btn btn-warning btn-lg action-btn"
+              (click)="updateEmpleado()"
+              [disabled]="!empleadoSeleccionado || isUpdating"
+            >
+              Modificar
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-danger btn-lg action-btn"
+              (click)="deleteEmpleado()"
+              [disabled]="!empleadoSeleccionado || loading"
+            >
+              Eliminar
+            </button>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+
+  <!-- Modales de confirmación y éxito -->
+  <nz-modal
+    [(nzVisible)]="isConfirmVisible"
+    [nzTitle]="accion === 'actualizar' ? 'CONFIRMAR ACTUALIZACIÓN' : (accion === 'eliminar' ? 'CONFIRMAR ELIMINACIÓN' : 'CONFIRMAR REGISTRO')"
+    (nzOnCancel)="handleConfirmCancel()"
+    (nzOnOk)="handleConfirmOk()"
+    nzOkText="Aceptar"
+    nzCancelText="Cancelar"
+    [nzMaskClosable]="false"
+    [nzCentered]="true"
+    [nzClosable]="false"
+  >
+    <ng-container *nzModalContent>
+      <p><b>Nombre:</b> {{ datosConfirmados.nombre }}</p>
+      <p><b>Apellidos:</b> {{ datosConfirmados.apellidos }}</p>
+      <p><b>DNI:</b> {{ datosConfirmados.dni }}</p>
+      <p><b>Email:</b> {{ datosConfirmados.email }}</p>
+      <p>
+        <b>Teléfono:</b> {{ datosConfirmados.phoneNumberPrefix }} {{ datosConfirmados.phoneNumber }}
+      </p>
+      <p><b>Rol:</b> {{ datosConfirmados.rol }}</p>
+    </ng-container>
+  </nz-modal>
+
+  <nz-modal
+    [(nzVisible)]="isSuccessVisible"
+    nzTitle="REGISTRO COMPLETADO"
+    (nzOnOk)="handleSuccessOk()"
+    nzOkText="Cerrar"
+    [nzCancelText]="null"
+    [nzMaskClosable]="false"
+    [nzCentered]="true"
+    [nzClosable]="false"
+  >
+    <ng-container *nzModalContent>
+      <p>Los datos se han registrado correctamente.</p>
+    </ng-container>
+  </nz-modal>
+
+  <nz-modal
+    [(nzVisible)]="isUpdateSuccessVisible"
+    nzTitle="ACTUALIZACIÓN COMPLETADA"
+    (nzOnOk)="handleUpdateSuccessOk()"
+    nzOkText="Cerrar"
+    [nzCancelText]="null"
+    [nzMaskClosable]="false"
+    [nzCentered]="true"
+    [nzClosable]="false"
+  >
+    <ng-container *nzModalContent>
+      <p>El empleado se ha actualizado correctamente.</p>
+    </ng-container>
+  </nz-modal>
+
+  <nz-modal
+    [(nzVisible)]="isDeleteSuccessVisible"
+    nzTitle="ELIMINACIÓN COMPLETADA"
+    (nzOnOk)="handleDeleteSuccessOk()"
+    nzOkText="Cerrar"
+    [nzCancelText]="null"
+    [nzMaskClosable]="false"
+    [nzCentered]="true"
+    [nzClosable]="false"
+  >
+    <ng-container *nzModalContent>
+      <p>El empleado se ha eliminado correctamente.</p>
+    </ng-container>
+  </nz-modal>
+</div>
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/registro/registro.scss                               │
+│ DESCRIPCIÓN: Estilos SCSS para el formulario de registro                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```scss
+h1 {
+  margin-top: 80px;;
+}
+
+.registro-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  margin: 24px auto;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+form[nz-form] {
+  width: 100%;
+  max-width: 920px;
+  padding: 24px 28px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background-color: #fff;
+  position: relative;
+  box-sizing: border-box;
+}
+
+form[nz-form] input[nz-input] {
+  height: 44px;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+nz-form-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+nz-form-label {
+  flex: 0 0 160px;
+  max-width: 45%;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+nz-form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  nz-form-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  nz-form-label {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 4px;
+    text-align: left;
+    font-size: 0.95rem;
+    line-height: 1.1;
+  }
+
+  nz-form-control {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  nz-form-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+  }
+
+  nz-form-label {
+    flex: 0 0 160px;
+    width: auto;
+    max-width: 45%;
+    margin-bottom: 0;
+    text-align: right;
+    padding-right: 12px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  nz-form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+form[nz-form] button[nz-button] {
+  height: 45px;
+  font-size: 16px;
+}
+
+.register-area {
+  margin-top: 16px;
+}
+
+.actions-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  flex: 0 0 auto;
+  min-width: 140px;
+  height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 15px;
+  line-height: 1.1;
+  border-radius: 8px;
+}
+
+.phone-prefix {
+  display: inline-block;
+  padding: 0 12px;
+  line-height: 32px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px 0 0 4px;
+  background-color: #f5f5f5;
+}
+
+p{
+  text-align: center;
+}
+
+.employee-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  border: 1px solid #d9d9d9;
+  border-top: none;
+  background: white;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: -1px;
+}
+
+.employee-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  small {
+    color: #666;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-btn {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 992px) {
+  .actions-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+
+  .action-btn {
+    width: auto;
+    min-width: 160px;
+    height: 48px;
+    padding: 10px 18px;
+  }
+
+  form[nz-form] { max-width: 980px; }
+}
+
+@media (min-width: 1200px) {
+  .action-btn { min-width: 180px; height: 52px; }
+  form[nz-form] { max-width: 1100px; padding: 32px 36px; }
+}
+
+.employee-dropdown {
+  z-index: 3000;
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/ausencias/ausencias.ts                               │
+│ DESCRIPCIÓN: Componente para gestión de ausencias con funcionalidad admin   │
+│              para buscar empleados y aprobar/rechazar ausencias              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { CommonModule, NgIf, NgForOf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AusenciasService } from '../../services/ausencias.service';
+import { AuthService } from '../../core/auth.service';
+import { EmpleadosService, EmpleadoDto } from '../../services/empleados.service';
+
+interface Absence {
+  id: string;
+  empleadoId: number;
+  empleadoNombre: string;
+  start: string;
+  end: string;
+  motivo: string;
+  aceptada: boolean | null;
+  createdAt: string;
+}
+
+@Component({
+  selector: 'app-ausencias',
+  standalone: true,
+  imports: [CommonModule, FormsModule, NgIf, NgForOf],
+  templateUrl: './ausencias.html',
+  styleUrls: ['./ausencias.scss']
+})
+export class Ausencias implements OnInit {
+  absenceStart = '';
+  absenceEnd = '';
+  absenceReason = '';
+
+  absences: Absence[] = [];
+  loading = false;
+
+  showConfirm = false;
+  pendingAbsence: Absence | null = null;
+
+  showDateWarning = false;
+  showDateError = false;
+  showSuccess = false;
+  showEmailConfirm = false;
+  showDeleteConfirm = false;
+  showError = false;
+  errorMessage = '';
+  deleteId = '';
+  lastCreatedAbsence: Absence | null = null;
+  minDate = '';
+
+  isAdmin = false;
+  empleados: EmpleadoDto[] = [];
+  selectedEmpleadoId: number | null = null;
+  searchQuery = '';
+  filteredEmpleados: EmpleadoDto[] = [];
+  showEmpleadosList = false;
+
+  constructor(
+    private api: AusenciasService,
+    private authService: AuthService,
+    private empleadosService: EmpleadosService
+  ) {
+    this.minDate = this.getTodayString();
+  }
+
+  ngOnInit() {
+    this.authService.state$.subscribe(state => {
+      this.isAdmin = state.rol === 'Admin';
+    });
+
+    if (this.isAdmin) {
+      this.loadEmpleados();
+    }
+
+    this.loadAbsencesFromServer();
+  }
+
+  private loadAbsencesFromServer() {
+    this.loading = true;
+
+    const request = this.isAdmin && this.selectedEmpleadoId
+      ? this.api.listarPorEmpleado(this.selectedEmpleadoId)
+      : this.api.listar();
+
+    request.subscribe({
+      next: (data) => {
+        this.absences = data.map(item => ({
+          id: item.id.toString(),
+          empleadoId: item.empleadoId,
+          empleadoNombre: item.empleadoNombre,
+          start: item.fechaInicio.split('T')[0],
+          end: item.fechaFin.split('T')[0],
+          motivo: item.motivo,
+          aceptada: item.aceptada,
+          createdAt: item.fechaInicio
+        }));
+        this.loading = false;
+      },
+      error: () => {
+        console.warn('Error cargando ausencias del servidor; mostrando vacío');
+        this.absences = [];
+        this.loading = false;
+      }
+    });
+  }
+
+  onRegisterClick() {
+    if (!this.absenceStart || !this.absenceEnd) {
+      this.errorMessage = 'Por favor, selecciona fecha de inicio y fin.';
+      this.showError = true;
+      return;
+    }
+
+    const start = new Date(this.absenceStart + 'T00:00:00');
+    const end = new Date(this.absenceEnd + 'T23:59:59');
+    const today = this.getTodayDate();
+
+    if (start < today) {
+      this.showDateWarning = true;
+      return;
+    }
+
+    if (end < start) {
+      this.showDateError = true;
+      return;
+    }
+
+    let empleadoId = 0;
+    this.authService.state$.subscribe(state => {
+      empleadoId = state.empleadoId || 0;
+    }).unsubscribe();
+
+    this.pendingAbsence = {
+      id: this.uuid(),
+      empleadoId: empleadoId,
+      empleadoNombre: '',
+      start: this.absenceStart,
+      end: this.absenceEnd,
+      motivo: (this.absenceReason || '').trim() || 'Sin especificar',
+      aceptada: null,
+      createdAt: new Date().toISOString()
+    };
+
+    this.showConfirm = true;
+  }
+
+  closeDateWarning() {
+    this.showDateWarning = false;
+  }
+
+  cancelConfirm() {
+    this.showConfirm = false;
+    this.pendingAbsence = null;
+  }
+
+  confirmAndEmail() {
+    if (!this.pendingAbsence) return;
+
+    this.loading = true;
+    const dto = {
+      FechaInicio: this.pendingAbsence.start + 'T00:00:00',
+      FechaFin: this.pendingAbsence.end + 'T23:59:59',
+      Motivo: this.pendingAbsence.motivo
+    };
+
+    this.api.crear(dto).subscribe({
+      next: (res) => {
+        this.absences.push({
+          id: res.id.toString(),
+          empleadoId: res.empleadoId,
+          empleadoNombre: res.empleadoNombre,
+          start: res.fechaInicio.split('T')[0],
+          end: res.fechaFin.split('T')[0],
+          motivo: res.motivo,
+          aceptada: res.aceptada,
+          createdAt: res.fechaInicio
+        });
+
+        this.loading = false;
+        this.lastCreatedAbsence = {
+          id: res.id.toString(),
+          empleadoId: res.empleadoId,
+          empleadoNombre: res.empleadoNombre,
+          start: res.fechaInicio.split('T')[0],
+          end: res.fechaFin.split('T')[0],
+          motivo: res.motivo,
+          aceptada: res.aceptada,
+          createdAt: res.fechaInicio
+        };
+        this.showSuccess = true;
+        this.showEmailConfirm = true;
+        this.resetForm();
+      },
+      error: () => {
+        this.loading = false;
+        this.errorMessage = 'Error al registrar la ausencia en el servidor';
+        this.showError = true;
+      }
+    });
+  }
+
+  private sendEmail(a: Absence) {
+    const startStr = this.formatDateES(a.start);
+    const endStr = this.formatDateES(a.end);
+    const dias = this.getDays(a);
+
+    const bodyLines = [
+      'Hola,',
+      '',
+      'Solicito la siguiente ausencia:',
+      \`· Inicio: \${startStr}\`,
+      \`· Fin: \${endStr}\`,
+      \`· Días: \${dias}\`,
+      \`· Motivo: \${a.motivo}\`,
+      '',
+      'Gracias y un saludo.'
+    ];
+
+    const subject = \`Solicitud de ausencia: \${startStr} - \${endStr}\`;
+    const mailto = \`mailto:jaime.rodriguez.rafael@gmail.com?subject=\${encodeURIComponent(subject)}&body=\${encodeURIComponent(bodyLines.join('\\n'))}\`;
+
+    window.location.href = mailto;
+  }
+
+  removeAbsence(id: string) {
+    this.deleteId = id;
+    this.showDeleteConfirm = true;
+  }
+
+  confirmDelete() {
+    this.showDeleteConfirm = false;
+    this.loading = true;
+    this.api.borrar(this.deleteId).subscribe({
+      next: () => {
+        this.absences = this.absences.filter(a => a.id !== this.deleteId);
+        this.loading = false;
+        this.deleteId = '';
+      },
+      error: () => {
+        this.loading = false;
+        this.errorMessage = 'Error al eliminar la ausencia del servidor';
+        this.showError = true;
+        this.deleteId = '';
+      }
+    });
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirm = false;
+    this.deleteId = '';
+  }
+
+  closeError() {
+    this.showError = false;
+    this.errorMessage = '';
+  }
+
+  closeDateError() {
+    this.showDateError = false;
+  }
+
+  closeSuccess() {
+    this.showSuccess = false;
+  }
+
+  confirmEmail() {
+    this.showEmailConfirm = false;
+    if (this.lastCreatedAbsence) {
+      this.sendEmail(this.lastCreatedAbsence);
+      this.lastCreatedAbsence = null;
+    }
+  }
+
+  cancelEmail() {
+    this.showEmailConfirm = false;
+    this.lastCreatedAbsence = null;
+  }
+
+  private resetForm() {
+    this.showConfirm = false;
+    this.pendingAbsence = null;
+    this.absenceStart = '';
+    this.absenceEnd = '';
+    this.absenceReason = '';
+  }
+
+  getDays(a: Absence): number {
+    const startDate = a.start.includes('T') ? a.start.split('T')[0] : a.start;
+    const endDate = a.end.includes('T') ? a.end.split('T')[0] : a.end;
+
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T23:59:59');
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 0;
+    }
+
+    const diff = end.getTime() - start.getTime();
+    return Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1);
+  }
+
+  private uuid(): string {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  private formatDateES(yyyyMMdd: string): string {
+    const [y, m, d] = yyyyMMdd.split('-').map(Number);
+    const dt = new Date(y, (m ?? 1) - 1, d ?? 1);
+    return dt.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  private getTodayString(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return \`\${year}-\${month}-\${day}\`;
+  }
+
+  private getTodayDate(): Date {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }
+
+  private loadEmpleados() {
+    this.empleadosService.getAll().subscribe({
+      next: (empleados) => {
+        this.empleados = empleados;
+        this.filteredEmpleados = empleados;
+      },
+      error: () => {
+        console.error('Error cargando empleados');
+      }
+    });
+  }
+
+  onSearchEmpleado() {
+    if (!this.searchQuery.trim()) {
+      this.filteredEmpleados = this.empleados;
+      this.showEmpleadosList = false;
+      return;
+    }
+
+    const query = this.searchQuery.toLowerCase();
+    this.filteredEmpleados = this.empleados.filter(e =>
+      e.nombre.toLowerCase().includes(query) ||
+      e.apellidos.toLowerCase().includes(query) ||
+      e.dni.toLowerCase().includes(query) ||
+      e.email.toLowerCase().includes(query)
+    );
+    this.showEmpleadosList = true;
+  }
+
+  selectEmpleado(empleado: EmpleadoDto) {
+    this.selectedEmpleadoId = empleado.id;
+    this.searchQuery = \`\${empleado.nombre} \${empleado.apellidos}\`;
+    this.showEmpleadosList = false;
+    this.loadAbsencesFromServer();
+  }
+
+  clearEmpleadoSelection() {
+    this.selectedEmpleadoId = null;
+    this.searchQuery = '';
+    this.filteredEmpleados = this.empleados;
+    this.showEmpleadosList = false;
+    this.loadAbsencesFromServer();
+  }
+
+  toggleAceptada(absence: Absence) {
+    if (!this.isAdmin) return;
+
+    const nuevoEstado = !absence.aceptada;
+    this.api.actualizarEstado(absence.id, nuevoEstado).subscribe({
+      next: () => {
+        absence.aceptada = nuevoEstado;
+      },
+      error: () => {
+        this.errorMessage = 'Error al actualizar el estado de la ausencia';
+        this.showError = true;
+      }
+    });
+  }
+}
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/ausencias/ausencias.html                             │
+│ DESCRIPCIÓN: Template HTML para gestión de ausencias con interfaz admin     │
+└─────────────────────────────────────────────────────────────────────────────┘
+```html
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 mb-3">
+      <h1 class="display-4 text-center" style="color:#001529; font-size:30px;">Ausencias</h1>
+    </div>
+
+    <!-- Card: Buscar empleado (solo para Admin) -->
+    <div *ngIf="isAdmin" class="col-12 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">Buscar ausencias por empleado</div>
+        <div class="card-body">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Buscar por nombre, apellidos, DNI o email..."
+              [(ngModel)]="searchQuery"
+              (input)="onSearchEmpleado()"
+              (focus)="showEmpleadosList = true"
+            >
+            <button class="btn btn-outline-secondary" type="button" (click)="clearEmpleadoSelection()" *ngIf="selectedEmpleadoId">
+              <span>✕</span> Limpiar
+            </button>
+          </div>
+
+          <div *ngIf="showEmpleadosList && filteredEmpleados.length > 0" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">
+            <button
+              *ngFor="let emp of filteredEmpleados"
+              class="list-group-item list-group-item-action"
+              (click)="selectEmpleado(emp)"
+            >
+              {{ emp.nombre }} {{ emp.apellidos }} - {{ emp.dni }}
+            </button>
+          </div>
+
+          <div *ngIf="showEmpleadosList && filteredEmpleados.length === 0" class="alert alert-info mt-2 mb-0">
+            No se encontraron empleados.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Registrar ausencia -->
+    <div class="col-12 col-md-4 d-flex flex-column mb-4">
+      <div id="absenceCard" class="card mt-1 shadow-sm h-100">
+        <div class="card-header bg-primary text-white">Registrar ausencia</div>
+        <div class="card-body">
+          <label class="form-label small fw-semibold">Fecha inicio</label>
+          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceStart" [min]="minDate">
+
+          <label class="form-label small fw-semibold">Fecha fin</label>
+          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceEnd" [min]="minDate">
+
+          <label class="form-label small fw-semibold">Motivo</label>
+          <div class="input-group mb-4">
+            <select class="form-select" [(ngModel)]="absenceReason">
+              <option value="" disabled selected>Seleccione motivo de la ausencia</option>
+              <option value="Vacaciones">Vacaciones</option>
+              <option value="Asistencia médica">Asistencia médica</option>
+              <option value="Traslado de domicilio">Traslado de domicilio</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100"
+                  (click)="onRegisterClick()"
+                  [disabled]="!absenceStart || !absenceEnd || loading">
+            {{ loading ? 'Registrando...' : 'Registrar ausencia' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Listado de ausencias -->
+    <div class="col-12 col-md-8 d-flex flex-column mb-4">
+      <div id="absenceListCard" class="card mt-1 shadow-sm">
+        <div class="card-header bg-primary text-white">Listado de ausencias</div>
+        <div class="card-body">
+          <div *ngIf="loading" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando ausencias...</p>
+          </div>
+
+          <div *ngIf="!loading && absences.length === 0" class="text-muted text-center py-3">
+            No hay ausencias registradas.
+          </div>
+
+          <ul class="list-group" *ngIf="!loading && absences.length > 0">
+            <li *ngFor="let a of absences" class="list-group-item absence-row">
+              <div class="abs-start">
+                <div class="small text-muted">Inicio</div>
+                <div class="fw-bold">{{ a.start | date:'dd/MM/yyyy' }}</div>
+              </div>
+
+              <div class="abs-end">
+                <div class="small text-muted">Fin</div>
+                <div class="fw-bold">{{ a.end | date:'dd/MM/yyyy' }}</div>
+              </div>
+
+              <div class="abs-days">
+                <div class="small text-muted">Días</div>
+                <div class="fw-bold">{{ getDays(a) }}</div>
+              </div>
+
+              <div class="abs-reason">
+                <div class="small text-muted">Motivo</div>
+                <div class="text-break">{{ a.motivo }}</div>
+                <div class="mt-1">
+                  <span class="status-badge"
+                        [ngClass]="{
+                          'accepted': a.aceptada === true,
+                          'rejected': a.aceptada === false,
+                          'pending': a.aceptada === null
+                        }">
+                    {{ a.aceptada === true ? 'Aceptada' : a.aceptada === false ? 'Rechazada' : 'Pendiente' }}
+                  </span>
+                </div>
+                <div *ngIf="isAdmin" class="text-muted small mt-1">
+                  Empleado: <span class="text-dark">{{ a.empleadoNombre }}</span>
+                </div>
+              </div>
+
+              <div class="abs-actions text-end">
+                <div *ngIf="isAdmin" class="form-check form-switch mb-2">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [checked]="a.aceptada === true"
+                    (change)="toggleAceptada(a)"
+                    [disabled]="loading"
+                  >
+                  <label class="form-check-label small">
+                    {{ a.aceptada === true ? 'Aceptada' : a.aceptada === false ? 'Rechazada' : 'Pendiente' }}
+                  </label>
+                </div>
+                <button class="btn btn-danger btn-sm" (click)="removeAbsence(a.id)" [disabled]="loading">
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+
+  <!-- Modales -->
+  <div *ngIf="showDateWarning" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-warning text-dark">
+        Fecha no válida
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-3">
+          <strong>No se pueden seleccionar fechas anteriores al día actual.</strong>
+        </p>
+        <p class="text-muted">
+          Por favor, selecciona una fecha igual o posterior a hoy.
+        </p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-warning" (click)="closeDateWarning()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-primary text-white">
+        Confirmar registro de ausencia
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-2">Revisa los datos antes de registrar:</p>
+        <ul class="list-unstyled mb-3">
+          <li><strong>Inicio:</strong> {{ pendingAbsence?.start | date:'dd/MM/yyyy' }}</li>
+          <li><strong>Fin:</strong> {{ pendingAbsence?.end | date:'dd/MM/yyyy' }}</li>
+          <li><strong>Días:</strong> {{ pendingAbsence ? getDays(pendingAbsence) : '-' }}</li>
+          <li><strong>Motivo:</strong> {{ pendingAbsence?.motivo }}</li>
+        </ul>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelConfirm()">Cancelar</button>
+        <button class="btn btn-primary" (click)="confirmAndEmail()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showDateError" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-danger text-white">
+        Error de fechas
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">La fecha de fin no puede ser anterior a la de inicio.</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-danger" (click)="closeDateError()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showSuccess" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-success text-white">
+        Ausencia registrada
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">La ausencia se ha registrado correctamente.</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-success" (click)="closeSuccess()">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showEmailConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-primary text-white">
+        Enviar notificación
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">¿Deseas enviar un email de notificación?</p>
+        <small class="text-muted d-block mt-2">Se abrirá tu aplicación de correo predeterminada.</small>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelEmail()">No</button>
+        <button class="btn btn-primary" (click)="confirmEmail()">Sí, enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showDeleteConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-danger text-white">
+        Confirmar eliminación
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">¿Estás seguro de que deseas eliminar esta ausencia?</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelDelete()">Cancelar</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showError" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-danger text-white">
+        Error
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">{{ errorMessage }}</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-danger" (click)="closeError()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVO: src/app/pages/ausencias/ausencias.scss                             │
+│ DESCRIPCIÓN: Estilos SCSS para el componente de ausencias                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```scss
+:host {
+  display: block;
+  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
+  background: transparent !important;
+  position: relative;
+  z-index: 1;
+  padding: 0 1rem;
+}
+
+h1 {
+  color: #001529;
+  margin-top: 80px;
+  margin-bottom: 40px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.container-fluid.py-4 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: #fff;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  color: #fff !important;
+}
+
+.card-header.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+#absenceCard {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+#absenceCard .form-label {
+  color: #001529;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+#absenceCard .form-control,
+#absenceCard .form-select {
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.2);
+  padding: 10px;
+  font-size: 1rem;
+}
+
+#absenceCard .btn-primary {
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.3px;
+  padding: 10px 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+  transition: all 0.2s ease;
+}
+
+#absenceCard .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(13, 110, 253, 0.4);
+}
+
+#absenceListCard {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card-header {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+#absenceCard .input-group {
+  position: relative;
+  z-index: 0;
+}
+
+#absenceCard .form-select,
+#absenceCard .form-control {
+  z-index: 1050;
+}
+
+#absenceListCard .card-body {
+  padding: 1.25rem;
+}
+
+.absence-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: #fff;
+}
+
+.absence-row .small {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.absence-row .fw-bold {
+  font-size: 1rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.status-badge.accepted {
+  color: #0f5132;
+  background: #d1e7dd;
+  border-color: #badbcc;
+}
+.status-badge.rejected {
+  color: #842029;
+  background: #f8d7da;
+  border-color: #f5c2c7;
+}
+.status-badge.pending {
+  color: #664d03;
+  background: #fff3cd;
+  border-color: #ffecb5;
+}
+
+.abs-actions button {
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  color: #fff;
+  background-color: #dc3545;
+  border: none;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+  transition: all 0.2s ease;
+}
+.abs-actions button:hover {
+  background-color: #bb2d3b;
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.5);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 992px) {
+  .absence-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .abs-actions {
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+}
+
+@media (max-width: 576px) {
+  .absence-row {
+    grid-template-columns: 1fr;
+  }
+  .abs-actions {
+    text-align: center;
+    margin-top: 6px;
+  }
+  #absenceCard,
+  #absenceListCard {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.modal-backdrop-app {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+
+.modal-card-app {
+  width: min(540px, 92vw);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: modalIn 120ms ease-out;
+}
+
+@keyframes modalIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.modal-header-app {
+  padding: 12px 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-body-app {
+  padding: 16px;
+  color: #001529;
+}
+
+.modal-footer-app {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.modal-footer-app .btn {
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+
+.modal-footer-app .btn-danger {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+}
+.modal-footer-app .btn-danger:hover {
+  background-color: #bb2d3b;
+  box-shadow: 0 6px 16px rgba(220, 53, 69, 0.45);
+}
+
+.modal-footer-app .btn-light {
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  color: #001529;
+}
+
+@media (min-width: 1200px) {
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 50px;
+  }
+
+  #absenceCard {
+    max-width: 700px;
+  }
+
+  #absenceCard .form-label {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  #absenceCard .form-control,
+  #absenceCard .form-select {
+    padding: 14px;
+    font-size: 1.1rem;
+    height: 50px;
+  }
+
+  #absenceCard .btn-primary {
+    font-size: 1.2rem;
+    padding: 14px 0;
+    height: 54px;
+  }
+
+  #absenceListCard {
+    max-width: 1000px;
+  }
+
+  #absenceListCard .card-body {
+    padding: 1.75rem;
+  }
+
+  .card-header {
+    font-size: 1.35rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .absence-row {
+    gap: 14px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 10px;
+  }
+
+  .absence-row .fw-bold {
+    font-size: 1.1rem;
+  }
+
+  .absence-row .small {
+    font-size: 0.95rem;
+  }
+
+  .abs-actions button {
+    font-size: 1rem;
+    padding: 8px 18px;
+  }
+}
+```
+
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTINÚA... (Caracteres restantes en siguiente actualización)
+═══════════════════════════════════════════════════════════════════════════════
