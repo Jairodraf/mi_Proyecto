@@ -22,31 +22,36 @@ $blue-100: #dbeeff; // updated light blue
 }
 
 /* Apply background to the whole app */
-html {
+html, body, app-root {
   height: 100%;
-  background: transparent;
 }
 
+/* Layout: column flex so footer stays at the end of the page when content is short
+   and moves with the page when content overflows. */
 body {
-  background-color: var(--app-bg);
-}
-
-/* Ensure the main app container expands to full height so background covers viewport */
-body, app-root {
-  height: 100%;
-  background: transparent;
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  /* prevent fixed footer from covering content */
-  padding-bottom: var(--app-footer-height);
-  /* prevent fixed header from covering content */
-  padding-top: var(--app-header-height);
-}
-
-body {
+  margin: 0;
+  background-color: var(--app-bg);
   position: relative;
   overflow-x: hidden;
-  overflow-y: auto;
+}
+
+/* Make the main content area grow so footer is pushed to the bottom */
+main {
+  flex: 1 0 auto;
+  /* Reserve exact space for header and footer so main fits the viewport when content is short */
+  padding-top: var(--app-header-height) !important;
+  padding-bottom: 20px;
+  /* Ensure main fills the remaining viewport area (header + main + footer = 100vh) */
+  min-height: calc(100vh - var(--app-header-height) - var(--app-footer-height));
+}
+
+/* Ensure routed page content always leaves at least 20px before the footer
+   This targets the last direct child inserted into <main> by the router. */
+main > *:last-child {
+  margin-bottom: 20px !important;
 }
 
 body::before {

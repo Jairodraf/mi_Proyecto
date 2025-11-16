@@ -2,7 +2,7 @@
   <!-- Encabezado de registro -->
   <div class="col-12 mb-3">
     <h1 class="display-4 text-center" style="color: #001529; font-size: 30px">
-      Registro Entrada / Salida
+      Registro Empleados
     </h1>
   </div>
 
@@ -155,33 +155,27 @@
 
       <nz-form-item nz-row class="register-area">
         <nz-form-control [nzSpan]="14" [nzOffset]="6">
-          <button class="btn btn-primary btn-lg w-100 login-form-button">Registrar</button>
-        </nz-form-control>
-      </nz-form-item>
+          <div class="actions-row">
+            <button type="submit" class="btn btn-primary btn-lg action-btn" [disabled]="loading">Registrar</button>
 
-      <nz-form-item nz-row class="register-area">
-        <nz-form-control [nzSpan]="14" [nzOffset]="6">
-          <button
-            type="button"
-            class="btn btn-warning btn-lg w-100 login-form-button"
-            (click)="updateEmpleado()"
-            [disabled]="!empleadoSeleccionado || isUpdating"
-          >
-            Modificar
-          </button>
-        </nz-form-control>
-      </nz-form-item>
+            <button
+              type="button"
+              class="btn btn-warning btn-lg action-btn"
+              (click)="updateEmpleado()"
+              [disabled]="!empleadoSeleccionado || isUpdating"
+            >
+              Modificar
+            </button>
 
-      <nz-form-item nz-row class="register-area">
-        <nz-form-control [nzSpan]="14" [nzOffset]="6">
-          <button
-            type="button"
-            class="btn btn-danger btn-lg w-100 login-form-button"
-            (click)="deleteEmpleado()"
-            [disabled]="!empleadoSeleccionado || loading"
-          >
-            Eliminar
-          </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-lg action-btn"
+              (click)="deleteEmpleado()"
+              [disabled]="!empleadoSeleccionado || loading"
+            >
+              Eliminar
+            </button>
+          </div>
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -190,7 +184,7 @@
   <!-- Modal de confirmación -->
   <nz-modal
     [(nzVisible)]="isConfirmVisible"
-    [nzTitle]="accion === 'actualizar' ? 'CONFIRMAR ACTUALIZACIÓN' : 'CONFIRMAR REGISTRO'"
+    [nzTitle]="accion === 'actualizar' ? 'CONFIRMAR ACTUALIZACIÓN' : (accion === 'eliminar' ? 'CONFIRMAR ELIMINACIÓN' : 'CONFIRMAR REGISTRO')"
     (nzOnCancel)="handleConfirmCancel()"
     (nzOnOk)="handleConfirmOk()"
     nzOkText="Aceptar"

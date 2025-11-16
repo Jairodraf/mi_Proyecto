@@ -1,18 +1,16 @@
 .footer {
-  position: fixed;
+  position: relative; /* in-flow element so it stays after main */
   left: 0;
   right: 0;
-  bottom: 0;
-  height: var(--app-footer-height);
+  width: 100%;
   background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(4px);
+  padding-top: 20px;
   padding: 10px 20px;
-  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.03);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 1050;
-  border-top: 2px solid rgba(13, 110, 253, 0.2);
+  border-top: 2px solid rgba(13, 110, 253, 0.08);
   flex-wrap: wrap; /* permite reorganizar en móviles */
 }
 
@@ -58,10 +56,7 @@
   box-shadow: 0 0 12px rgba(13, 110, 253, 0.25);
 }
 
-/* 🔹 Evita que el contenido quede debajo del footer */
-:host ::ng-deep main {
-  padding-bottom: var(--app-footer-height);
-}
+/* No forzamos padding en main anymore — layout uses flex so footer is after content */
 
 /* 📱 Diseño responsive */
 @media (max-width: 768px) {

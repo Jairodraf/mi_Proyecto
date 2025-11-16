@@ -6,23 +6,102 @@ h1 {
 .registro-container {
   display: flex;
   justify-content: center;   /* centra horizontal */
-  align-items: flex-start;       /* centra vertical */
-  height: 60vh;
-  margin-top: 80px;     /* ocupa toda la pantalla */
+  align-items: flex-start;   /* centra vertical */
+  width: 100%;
+  margin: 24px auto;         /* espacio superior más razonable */
+  padding: 12px;
+  box-sizing: border-box;
 }
 
 form[nz-form] {
-  width: 500px;              /* ancho del formulario */
-  padding: 24px;
+  width: 100%;
+  max-width: 920px;          /* más ancho para escritorio */
+  padding: 24px 28px;
   border: 1px solid #f0f0f0;
   border-radius: 8px;
   background-color: #fff;
   position: relative;
+  box-sizing: border-box;
 }
 
 form[nz-form] input[nz-input] {
-  height: 40px;
+  height: 44px;
   font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Make form items layout responsive: label on left, control on right */
+nz-form-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+nz-form-label {
+  flex: 0 0 160px; /* label column width */
+  max-width: 45%;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+nz-form-control {
+  flex: 1 1 auto;
+  min-width: 0; /* allow children to shrink */
+}
+
+/* Stack labels and controls on narrower screens so nothing overlaps */
+@media (max-width: 768px) {
+  nz-form-item {
+    flex-direction: column;
+    align-items: stretch;
+
+    /* Reduce vertical gap between label and control when stacked */
+    gap: 6px;
+  }
+
+  nz-form-label {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 4px; /* smaller spacing when stacked */
+    text-align: left;
+    font-size: 0.95rem; /* slightly smaller for compactness */
+    line-height: 1.1;
+  }
+
+  nz-form-control {
+    width: 100%;
+  }
+}
+
+/* Force horizontal label+control layout on larger screens to avoid
+   browsers (e.g. Firefox) rendering labels above inputs unexpectedly. */
+@media (min-width: 769px) {
+  nz-form-item {
+    flex-direction: row; /* ensure row layout */
+    align-items: center; /* vertically center label and input */
+    gap: 12px;
+    display: flex !important; /* force flex in all browsers (Firefox fix) */
+    flex-wrap: nowrap !important;
+  }
+
+  nz-form-label {
+    flex: 0 0 160px; /* fixed label column width */
+    width: auto;
+    max-width: 45%;
+    margin-bottom: 0;
+    text-align: right; /* label at left, text right-aligned next to input */
+    padding-right: 12px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  nz-form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 
 form[nz-form] button[nz-button] {
@@ -32,6 +111,33 @@ form[nz-form] button[nz-button] {
 
 .register-area {
   margin-top: 16px;
+}
+/* Actions row: place the three buttons side-by-side with gap and equal width */
+.actions-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  /* Prefer fixed-ish button sizes on desktop so labels fit */
+  flex: 0 0 auto;
+  min-width: 140px;
+  height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 15px;
+  line-height: 1.1;
+  border-radius: 8px;
 }
 .phone-prefix {
   display: inline-block;
@@ -83,4 +189,48 @@ p{
     color: #666;
     font-size: 12px;
   }
+}
+
+/* Stack action buttons on small screens (mobile/tablet) */
+@media (max-width: 991.98px) {
+  .actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-btn {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+}
+
+/* Keep buttons in a single row on larger screens */
+@media (min-width: 992px) {
+  .actions-row {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+
+  .action-btn {
+    width: auto;
+    min-width: 160px;
+    height: 48px;
+    padding: 10px 18px;
+  }
+
+  form[nz-form] { max-width: 980px; }
+}
+
+@media (min-width: 1200px) {
+  .action-btn { min-width: 180px; height: 52px; }
+  form[nz-form] { max-width: 1100px; padding: 32px 36px; }
+}
+
+/* Ensure dropdown and absolute elements appear above footer */
+.employee-dropdown {
+  z-index: 3000;
 }

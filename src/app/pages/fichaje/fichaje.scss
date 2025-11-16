@@ -3,7 +3,8 @@
 /* Asegura que el componente se vea sobre el fondo global */
 :host {
   display: block;
-  min-height: 100vh;
+  /* Use remaining viewport height after header/footer so footer stays after content */
+  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
   background: transparent !important; /* deja ver el fondo azul + logo global */
   position: relative;
   z-index: 1;
@@ -102,15 +103,17 @@ h1 {
   }
 }
 
-/* === Resultados como GRID adaptable (reemplaza el antiguo flex) === */
+/* === Resultados: layout adaptable con wrapping === */
 .result-row {
-  display: grid;
+  /* Por defecto (móvil/anchuras reducidas) usamos flex-wrap para que las
+     columnas caigan a la siguiente línea cuando no quepan en una sola fila. */
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 0.75rem 1rem;
-
-  /* 🖥️ Desktop: 5 columnas (ini, fin, dur, inc. entrada, inc. salida) */
-  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Columnas: evita que hora/duración se rompan; incidencias pueden envolver */
@@ -120,31 +123,53 @@ h1 {
 .result-col .result-value {
   overflow: hidden;
   text-overflow: ellipsis;
+  /* por defecto permitimos envolver para columnas flexibles (incidencias, textos largos) */
+  white-space: normal;
+}
+
+/* Mantén sin-wrap para columnas de hora/duración para que no se rompan en varias líneas */
+.result-start .result-value,
+.result-end .result-value,
+.result-duration .result-value {
   white-space: nowrap;
 }
+
 .result-incidence .result-value {
-  white-space: normal;          /* ✅ deja envolver texto largo en incidencias */
+  white-space: normal;          /* deja envolver texto largo en incidencias */
   word-break: break-word;
 }
 
-/* Anchos mínimos útiles */
+/* Asegura que los items no desborden el contenedor padre */
+.list-group,
+.list-group-item {
+  width: 100%;
+  box-sizing: border-box;
+}
+.list-group-item {
+  overflow: hidden;
+}
+
+.result-col .result-value {
+  overflow-wrap: anywhere;
+}
+
+/* Anchos mínimos útiles y reglas flex para wrapping */
 .result-start, .result-end { min-width: 100px; }
 .result-duration { min-width: 120px; }
-.result-incidence {
-  flex: 1 1 220px; /* no afecta al grid, pero mantiene mínimos */
-  min-width: 160px;
-  max-width: 420px;
-}
+.result-incidence { min-width: 160px; max-width: 420px; }
+
+/* Comportamiento por defecto (flex): bases para que los elementos envuelvan
+   y mantengan una proporción razonable */
+.result-start, .result-end { flex: 0 0 18%; }
+.result-duration { flex: 0 0 14%; }
+.result-incidence { flex: 1 1 30%; }
 
 /* 💻 Tablets (≤ 992px): 4 columnas; incidencias a ancho completo debajo */
 @media (max-width: 992px) {
-  .result-row {
-    grid-template-columns: repeat(4, minmax(110px, 1fr));
-  }
-  /* Las dos incidencias bajan ocupando toda la fila */
-  .result-row > .result-incidence {
-    grid-column: 1 / -1;
-  }
+  /* En pantallas medias usamos flex wrap y ajustamos las bases para mejor lectura */
+  .result-start, .result-end { flex: 0 0 45%; }
+  .result-duration { flex: 0 0 45%; }
+  .result-incidence { flex: 1 1 100%; }
 }
 
 /* 📱 Móviles (≤ 767.98px): ajustes generales + resultados en 2 columnas */
@@ -160,21 +185,96 @@ h1 {
     max-width: none;
   }
 
-  /* Resultados en 2 columnas */
-  .result-row {
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
-    gap: 10px 12px;
-  }
-
-  /* Cada bloque ocupa media fila; incidencias a ancho completo */
-  .result-start, .result-end, .result-duration { grid-column: span 1; }
-  .result-row > .result-incidence { grid-column: 1 / -1; }
+  /* En móviles dejamos que las columnas principales ocupen la mitad y
+     las incidencias se muestren en una línea completa debajo si hace falta. */
+  .result-start, .result-end, .result-duration { flex: 0 0 50%; }
+  .result-incidence { flex: 1 1 100%; }
 
   /* En pantallas muy estrechas, permite cortar aún mejor los textos largos */
   .result-incidence .result-value {
     overflow: visible;
     word-break: break-word;
     white-space: normal;
+  }
+}
+
+/* 🖥️ Grandes pantallas: usamos grid para alinear columnas en una sola línea */
+@media (min-width: 1200px) {
+  .result-row {
+    display: grid;
+    grid-template-columns: 140px 140px 160px minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 0.9rem 1.2rem;
+    align-items: center;
+  }
+
+  /* Asegura que la tarjeta pueda crecer y usar el espacio disponible */
+  /* Centrar el contenido: mantenemos el offset en la plantilla pero anulamos
+     su efecto visual centrándolo y limitando la anchura máxima. */
+  .col-md-6.offset-md-3.d-flex.flex-column {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 1200px; /* limita la caja de contenido para mantener lectura */
+    margin: 0 auto; /* centra horizontalmente */
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+
+  .col-md-6.offset-md-3.d-flex.flex-column > .card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Fallback: permitir scroll horizontal dentro del body de la card si aún
+     por alguna razón el contenido excede (aparece solo en casos extremos). */
+  .col-md-6.offset-md-3.d-flex.flex-column > .card .card-body {
+    overflow-x: auto;
+  }
+}
+
+/* Evita que las cards laterales se superpongan a la tarjeta de resultados.
+   En anchos medios, forzamos que la tarjeta de resultados aparezca primero
+   y las cards laterales (controles / filtro) bajen debajo cuando falta espacio. */
+@media (max-width: 1199px) {
+  .row.gx-3.justify-content-center {
+    display: flex;
+    justify-content: center; /* centra todas las columnas */
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* Ponemos la columna central (resultados) primero y la centramos en su columna */
+  .row.gx-3.justify-content-center > .col-12.col-md-6.offset-md-3.d-flex.flex-column {
+    order: 1;
+    flex: 0 0 100%;
+    max-width: 900px; /* limitamos anchura para mantener lectura y centrar */
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Las columnas laterales van después y ocupan ancho reducido, centradas */
+  .row.gx-3.justify-content-center > .col-12.col-md-3 {
+    order: 2;
+    flex: 0 0 100%;
+    max-width: 520px; /* tarjetas laterales más estrechas al apilarse */
+    width: 100%;
+    padding: 0 12px;
+    margin: 12px auto 0 auto; /* centrado horizontal */
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Aseguramos que las cards internas respeten el ancho y se centren */
+  .row.gx-3.justify-content-center .card {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
 }
 

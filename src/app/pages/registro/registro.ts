@@ -53,7 +53,7 @@ export class Registro implements OnInit, OnDestroy {
   isUpdating = false;
 
   datosConfirmados: any = {};
-  accion: 'crear' | 'actualizar' = 'crear';
+  accion: 'crear' | 'actualizar' | 'eliminar' = 'crear';
 
   // Employee search
   empleados: EmpleadoDto[] = [];
@@ -151,6 +151,11 @@ export class Registro implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.accion === 'eliminar') {
+      this.handleDeleteOk();
+      return;
+    }
+
     this.isConfirmVisible = false;
 
     const v = this.validateForm.getRawValue();
@@ -210,18 +215,28 @@ export class Registro implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.validateForm.valid) {
-      this.datosConfirmados = this.validateForm.value;
-      this.accion = 'actualizar';
-      this.isConfirmVisible = true;
-    } else {
-      Object.values(this.validateForm.controls).forEach((control) => {
-        if (control.invalid) {
-          control.markAsDirty();
-          control.updateValueAndValidity({ onlySelf: true });
-        }
-      });
-    }
+    // Allow partial updates: merge current empleado data with any non-empty form fields
+    const v = this.validateForm.getRawValue();
+    const merged: any = {
+      nombre: this.empleadoSeleccionado.nombre,
+      apellidos: this.empleadoSeleccionado.apellidos,
+      dni: this.empleadoSeleccionado.dni,
+      email: this.empleadoSeleccionado.email,
+      phoneNumberPrefix: this.validateForm.controls['phoneNumberPrefix'].value || '+34',
+      phoneNumber: this.empleadoSeleccionado.telefono ?? '',
+      rol: this.empleadoSeleccionado.rol,
+    };
+
+    if (v.nombre && v.nombre.trim() !== '') merged.nombre = v.nombre.trim();
+    if (v.apellidos && v.apellidos.trim() !== '') merged.apellidos = v.apellidos.trim();
+    if (v.dni && v.dni.trim() !== '') merged.dni = v.dni.trim();
+    if (v.email && v.email.trim() !== '') merged.email = v.email.trim();
+    if (v.phoneNumber && v.phoneNumber.trim() !== '') merged.phoneNumber = v.phoneNumber.trim();
+    if (v.rol && v.rol.trim() !== '') merged.rol = v.rol.trim();
+
+    this.datosConfirmados = merged;
+    this.accion = 'actualizar';
+    this.isConfirmVisible = true;
   }
 
   handleUpdateOk(): void {
@@ -229,24 +244,51 @@ export class Registro implements OnInit, OnDestroy {
 
     this.isConfirmVisible = false;
     this.isUpdating = true;
-
     const v = this.validateForm.getRawValue();
-    const rol = (v.rol || '').toString().toLowerCase() === 'admin' ? 'Admin' : 'User';
-    const telefonoRaw = `${v.phoneNumberPrefix ?? ''}${v.phoneNumber ?? ''}`.replace(/\s+/g, '');
-    const telefono = telefonoRaw.length ? telefonoRaw : null;
 
-    const dto: UpdateEmpleadoDto = {
-      nombre: v.nombre!.trim(),
-      apellidos: v.apellidos!.trim(),
-      dni: v.dni!.trim().toUpperCase(),
-      email: v.email!.trim().toLowerCase(),
-      telefono,
-      rol,
+    // Build a partial dto containing only changed/non-empty fields
+    const dto: UpdateEmpleadoDto = {};
+
+    const addIfChanged = (key: keyof UpdateEmpleadoDto, value: any) => {
+      if (value === undefined || value === null) return;
+      // compare to existing empleadoSeleccionado
+      const existing = (this.empleadoSeleccionado as any)[key];
+      if (typeof value === 'string') {
+        if (value.trim() === '') return;
+      }
+      // normalize some fields for comparison
+      let normalizedNew = value;
+      let normalizedExisting = existing;
+      if (key === 'dni' && typeof value === 'string') normalizedNew = value.trim().toUpperCase();
+      if (key === 'email' && typeof value === 'string') normalizedNew = value.trim().toLowerCase();
+      if (key === 'nombre' && typeof value === 'string') normalizedNew = value.trim();
+      if (key === 'apellidos' && typeof value === 'string') normalizedNew = value.trim();
+
+      if (normalizedNew !== normalizedExisting) {
+        (dto as any)[key] = normalizedNew;
+      }
     };
 
-    // Solo incluir contraseña si se ha modificado
+    addIfChanged('nombre', v.nombre);
+    addIfChanged('apellidos', v.apellidos);
+    addIfChanged('dni', v.dni ? v.dni.toUpperCase() : undefined);
+    addIfChanged('email', v.email ? v.email.toLowerCase() : undefined);
+
+    const telefonoRaw = `${v.phoneNumberPrefix ?? ''}${v.phoneNumber ?? ''}`.replace(/\s+/g, '');
+    if (telefonoRaw) addIfChanged('telefono', telefonoRaw);
+
+    if (v.rol) addIfChanged('rol', (v.rol || '').toString());
+
+    // Include password only if provided and non-empty
     if (v.password && v.password.trim()) {
-      dto.contrasena = v.password;
+      addIfChanged('contrasena', v.password);
+    }
+
+    // If no changes, inform user
+    if (Object.keys(dto).length === 0) {
+      this.isUpdating = false;
+      this.msg.info('No hay cambios para actualizar');
+      return;
     }
 
     this.api
@@ -280,41 +322,57 @@ export class Registro implements OnInit, OnDestroy {
       });
   }
 
+  handleDeleteOk(): void {
+    if (!this.empleadoSeleccionado) return;
+
+    this.isConfirmVisible = false;
+    this.loading = true;
+
+    this.api
+      .delete(this.empleadoSeleccionado.id)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.msg.success('Empleado eliminado correctamente');
+          this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
+          this.empleadoSeleccionado = null;
+          // Recargar lista de empleados
+          this.api.getAll().subscribe({
+            next: (data) => {
+              this.empleados = data;
+            },
+          });
+        },
+        error: (err: HttpErrorResponse) => {
+          if (err?.status === 403 || err?.status === 401) {
+            this.msg.error('No autorizado. Solo admins pueden eliminar empleados');
+          } else {
+            this.msg.error('Error al eliminar el empleado');
+          }
+        },
+      });
+  }
+
   deleteEmpleado(): void {
     if (!this.empleadoSeleccionado) {
       this.msg.warning('Debes seleccionar un empleado para eliminar');
       return;
     }
 
-    if (confirm(`¿Estás seguro de que deseas eliminar a ${this.empleadoSeleccionado.nombre} ${this.empleadoSeleccionado.apellidos}?`)) {
-      this.loading = true;
-      this.api.delete(this.empleadoSeleccionado.id)
-        .pipe(
-          finalize(() => {
-            this.loading = false;
-          })
-        )
-        .subscribe({
-          next: () => {
-            this.msg.success('Empleado eliminado correctamente');
-            this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
-            this.empleadoSeleccionado = null;
-            // Recargar lista de empleados
-            this.api.getAll().subscribe({
-              next: (data) => {
-                this.empleados = data;
-              },
-            });
-          },
-          error: (err: HttpErrorResponse) => {
-            if (err?.status === 403 || err?.status === 401) {
-              this.msg.error('No autorizado. Solo admins pueden eliminar empleados');
-            } else {
-              this.msg.error('Error al eliminar el empleado');
-            }
-          },
-        });
-    }
+    // Open confirmation modal populated with empleado data
+    this.datosConfirmados = {
+      nombre: this.empleadoSeleccionado.nombre,
+      apellidos: this.empleadoSeleccionado.apellidos,
+      dni: this.empleadoSeleccionado.dni,
+      email: this.empleadoSeleccionado.email,
+      phoneNumber: this.empleadoSeleccionado.telefono ?? '',
+    };
+    this.accion = 'eliminar' as any;
+    this.isConfirmVisible = true;
   }
 
   confirmationValidator(control: AbstractControl): ValidationErrors | null {

@@ -3,7 +3,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;   /* centra todo verticalmente */
-  min-height: 100vh;             /* ocupa solo la pantalla visible */
+  /* Use remaining viewport area after header/footer so footer remains after content */
+  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
   background: transparent;   /* deja ver el fondo global */
   padding: 0 16px;           /* reduce padding para no sumar altura extra */
   z-index: 1;

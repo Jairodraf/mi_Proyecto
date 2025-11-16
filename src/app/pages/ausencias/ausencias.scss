@@ -1,6 +1,7 @@
 :host {
   display: block;
-  min-height: 100vh;
+  /* Use remaining viewport area after header/footer so footer remains after content */
+  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
   background: transparent !important;
   position: relative;
   z-index: 1;
@@ -160,11 +161,6 @@ h1 {
     width: 100%;
     max-width: none;
   }
-}
-
-/* === Espacio inferior general === */
-.mb-4 {
-  margin-bottom: 1.5rem !important;
 }
 
 /* ===== Modal simple controlado por Angular ===== */
