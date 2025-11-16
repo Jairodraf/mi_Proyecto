@@ -12,6 +12,16 @@ export interface CreateEmpleadoDto {
   rol: string; // "Admin" | "User"
 }
 
+export interface UpdateEmpleadoDto {
+  nombre?: string;
+  apellidos?: string;
+  dni?: string;
+  email?: string;
+  contrasena?: string;
+  telefono?: string | null;
+  rol?: string;
+}
+
 export interface EmpleadoDto {
   id: number;
   nombre: string;
@@ -33,5 +43,13 @@ export class EmpleadosService {
 
   getAll() {
     return this.http.get<EmpleadoDto[]>(this.base);
+  }
+
+  delete(id: number) {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  update(id: number, dto: UpdateEmpleadoDto) {
+    return this.http.put<EmpleadoDto>(`${this.base}/${id}`, dto);
   }
 }

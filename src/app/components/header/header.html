@@ -13,7 +13,7 @@
       <!-- <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a> -->
 
       <!-- Mostrar enlaces solo si hay sesión -->
-      <ng-container *ngIf="isLogged$">
+      <ng-container *ngIf="isLogged$ | async">
         <a routerLink="/fichaje" routerLinkActive="active">Fichaje</a>
         <a routerLink="/ausencias" routerLinkActive="active">Ausencias</a>
         <a *ngIf="isAdmin$ | async" routerLink="/registro" routerLinkActive="active">Registro</a>

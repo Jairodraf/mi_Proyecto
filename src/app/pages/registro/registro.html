@@ -9,6 +9,32 @@
   <!-- Formulario de registro -->
   <div class="registro-container">
     <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
+      <!-- Buscar Empleado -->
+      <nz-form-item>
+        <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="busquedaEmpleado">Buscar Empleado</nz-form-label>
+        <nz-form-control [nzSm]="14" [nzXs]="24">
+          <input
+            nz-input
+            id="busquedaEmpleado"
+            [(ngModel)]="busquedaEmpleado"
+            (input)="onEmpleadoSearch($event)"
+            placeholder="Buscar por nombre, apellidos, DNI o email"
+            autocomplete="off"
+          />
+          <!-- Dropdown de empleados filtrados -->
+          @if (empleadosFiltrados.length > 0) {
+          <div class="employee-dropdown">
+            @for (emp of empleadosFiltrados; track emp.id) {
+            <div class="employee-item" (click)="selectEmpleado(emp)">
+              <strong>{{ emp.nombre }} {{ emp.apellidos }}</strong> <br />
+              <small>{{ emp.dni }} - {{ emp.email }}</small>
+            </div>
+            }
+          </div>
+          }
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="nombre">Nombre</nz-form-label>
         <nz-form-control
@@ -132,13 +158,39 @@
           <button class="btn btn-primary btn-lg w-100 login-form-button">Registrar</button>
         </nz-form-control>
       </nz-form-item>
+
+      <nz-form-item nz-row class="register-area">
+        <nz-form-control [nzSpan]="14" [nzOffset]="6">
+          <button
+            type="button"
+            class="btn btn-warning btn-lg w-100 login-form-button"
+            (click)="updateEmpleado()"
+            [disabled]="!empleadoSeleccionado || isUpdating"
+          >
+            Modificar
+          </button>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item nz-row class="register-area">
+        <nz-form-control [nzSpan]="14" [nzOffset]="6">
+          <button
+            type="button"
+            class="btn btn-danger btn-lg w-100 login-form-button"
+            (click)="deleteEmpleado()"
+            [disabled]="!empleadoSeleccionado || loading"
+          >
+            Eliminar
+          </button>
+        </nz-form-control>
+      </nz-form-item>
     </form>
   </div>
 
   <!-- Modal de confirmación -->
   <nz-modal
     [(nzVisible)]="isConfirmVisible"
-    nzTitle="CONFIRMAR REGISTRO"
+    [nzTitle]="accion === 'actualizar' ? 'CONFIRMAR ACTUALIZACIÓN' : 'CONFIRMAR REGISTRO'"
     (nzOnCancel)="handleConfirmCancel()"
     (nzOnOk)="handleConfirmOk()"
     nzOkText="Aceptar"
