@@ -4,16 +4,53 @@
       <h1 class="display-4 text-center" style="color:#001529; font-size:30px;">Ausencias</h1>
     </div>
 
+    <!-- Card: Buscar empleado (solo para Admin) -->
+    <div *ngIf="isAdmin" class="col-12 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">Buscar ausencias por empleado</div>
+        <div class="card-body">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Buscar por nombre, apellidos, DNI o email..."
+              [(ngModel)]="searchQuery"
+              (input)="onSearchEmpleado()"
+              (focus)="showEmpleadosList = true"
+            >
+            <button class="btn btn-outline-secondary" type="button" (click)="clearEmpleadoSelection()" *ngIf="selectedEmpleadoId">
+              <span>✕</span> Limpiar
+            </button>
+          </div>
+
+          <!-- Lista de empleados filtrados -->
+          <div *ngIf="showEmpleadosList && filteredEmpleados.length > 0" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">
+            <button
+              *ngFor="let emp of filteredEmpleados"
+              class="list-group-item list-group-item-action"
+              (click)="selectEmpleado(emp)"
+            >
+              {{ emp.nombre }} {{ emp.apellidos }} - {{ emp.dni }}
+            </button>
+          </div>
+
+          <div *ngIf="showEmpleadosList && filteredEmpleados.length === 0" class="alert alert-info mt-2 mb-0">
+            No se encontraron empleados.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Card: Registrar ausencia -->
-    <div class="col-12 col-md-3 d-flex flex-column mb-4">
+    <div class="col-12 col-md-4 d-flex flex-column mb-4">
       <div id="absenceCard" class="card mt-1 shadow-sm h-100">
         <div class="card-header bg-primary text-white">Registrar ausencia</div>
         <div class="card-body">
           <label class="form-label small fw-semibold">Fecha inicio</label>
-          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceStart">
+          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceStart" [min]="minDate">
 
           <label class="form-label small fw-semibold">Fecha fin</label>
-          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceEnd">
+          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceEnd" [min]="minDate">
 
           <label class="form-label small fw-semibold">Motivo</label>
           <div class="input-group mb-4">
@@ -28,23 +65,30 @@
 
           <button class="btn btn-primary btn-lg w-100"
                   (click)="onRegisterClick()"
-                  [disabled]="!absenceStart || !absenceEnd">
-            Registrar ausencia
+                  [disabled]="!absenceStart || !absenceEnd || loading">
+            {{ loading ? 'Registrando...' : 'Registrar ausencia' }}
           </button>
         </div>
       </div>
     </div>
 
     <!-- Card: Listado de ausencias -->
-    <div class="col-12 col-md-7 d-flex flex-column mb-4">
+    <div class="col-12 col-md-8 d-flex flex-column mb-4">
       <div id="absenceListCard" class="card mt-1 shadow-sm">
         <div class="card-header bg-primary text-white">Listado de ausencias</div>
         <div class="card-body">
-          <div *ngIf="absences.length === 0" class="text-muted text-center py-3">
+          <div *ngIf="loading" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando ausencias...</p>
+          </div>
+
+          <div *ngIf="!loading && absences.length === 0" class="text-muted text-center py-3">
             No hay ausencias registradas.
           </div>
 
-          <ul class="list-group" *ngIf="absences.length > 0">
+          <ul class="list-group" *ngIf="!loading && absences.length > 0">
             <li *ngFor="let a of absences" class="list-group-item absence-row">
               <div class="abs-start">
                 <div class="small text-muted">Inicio</div>
@@ -63,11 +107,37 @@
 
               <div class="abs-reason">
                 <div class="small text-muted">Motivo</div>
-                <div class="text-break">{{ a.reason }}</div>
+                <div class="text-break">{{ a.motivo }}</div>
+                <!-- Insignia de estado visible para todos -->
+                <div class="mt-1">
+                  <span class="status-badge"
+                        [ngClass]="{
+                          'accepted': a.aceptada === true,
+                          'rejected': a.aceptada === false,
+                          'pending': a.aceptada === null
+                        }">
+                    {{ a.aceptada === true ? 'Aceptada' : a.aceptada === false ? 'Rechazada' : 'Pendiente' }}
+                  </span>
+                </div>
+                <div *ngIf="isAdmin" class="text-muted small mt-1">
+                  Empleado: <span class="text-dark">{{ a.empleadoNombre }}</span>
+                </div>
               </div>
 
               <div class="abs-actions text-end">
-                <button class="btn btn-danger btn-sm" (click)="removeAbsence(a.id)">
+                <div *ngIf="isAdmin" class="form-check form-switch mb-2">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [checked]="a.aceptada === true"
+                    (change)="toggleAceptada(a)"
+                    [disabled]="loading"
+                  >
+                  <label class="form-check-label small">
+                    {{ a.aceptada === true ? 'Aceptada' : a.aceptada === false ? 'Rechazada' : 'Pendiente' }}
+                  </label>
+                </div>
+                <button class="btn btn-danger btn-sm" (click)="removeAbsence(a.id)" [disabled]="loading">
                   Eliminar
                 </button>
               </div>
@@ -81,6 +151,26 @@
     </div>
   </div>
 
+  <!-- ===== Modal de aviso de fecha anterior ===== -->
+  <div *ngIf="showDateWarning" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-warning text-dark">
+        Fecha no válida
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-3">
+          <strong>No se pueden seleccionar fechas anteriores al día actual.</strong>
+        </p>
+        <p class="text-muted">
+          Por favor, selecciona una fecha igual o posterior a hoy.
+        </p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-warning" (click)="closeDateWarning()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== Modal de confirmación (fuera del <li>, global) ===== -->
   <div *ngIf="showConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
@@ -88,18 +178,95 @@
         Confirmar registro de ausencia
       </div>
       <div class="modal-body-app">
-        <p class="mb-2">Revisa los datos antes de enviar el email:</p>
+        <p class="mb-2">Revisa los datos antes de registrar:</p>
         <ul class="list-unstyled mb-3">
           <li><strong>Inicio:</strong> {{ pendingAbsence?.start | date:'dd/MM/yyyy' }}</li>
           <li><strong>Fin:</strong> {{ pendingAbsence?.end | date:'dd/MM/yyyy' }}</li>
           <li><strong>Días:</strong> {{ pendingAbsence ? getDays(pendingAbsence) : '-' }}</li>
-          <li><strong>Motivo:</strong> {{ pendingAbsence?.reason }}</li>
+          <li><strong>Motivo:</strong> {{ pendingAbsence?.motivo }}</li>
         </ul>
-        <small class="text-muted d-block">Se abrirá tu aplicación de correo con este contenido.</small>
       </div>
       <div class="modal-footer-app">
         <button class="btn btn-light" (click)="cancelConfirm()">Cancelar</button>
-        <button class="btn btn-danger" (click)="confirmAndEmail()">Aceptar y enviar</button>
+        <button class="btn btn-primary" (click)="confirmAndEmail()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal de error de fechas ===== -->
+  <div *ngIf="showDateError" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-danger text-white">
+        Error de fechas
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">La fecha de fin no puede ser anterior a la de inicio.</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-danger" (click)="closeDateError()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal de éxito ===== -->
+  <div *ngIf="showSuccess" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-success text-white">
+        Ausencia registrada
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">La ausencia se ha registrado correctamente.</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-success" (click)="closeSuccess()">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal de confirmación de email ===== -->
+  <div *ngIf="showEmailConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-primary text-white">
+        Enviar notificación
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">¿Deseas enviar un email de notificación?</p>
+        <small class="text-muted d-block mt-2">Se abrirá tu aplicación de correo predeterminada.</small>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelEmail()">No</button>
+        <button class="btn btn-primary" (click)="confirmEmail()">Sí, enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal de confirmación de eliminación ===== -->
+  <div *ngIf="showDeleteConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-danger text-white">
+        Confirmar eliminación
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">¿Estás seguro de que deseas eliminar esta ausencia?</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelDelete()">Cancelar</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal de error general ===== -->
+  <div *ngIf="showError" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-danger text-white">
+        Error
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">{{ errorMessage }}</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-danger" (click)="closeError()">Cerrar</button>
       </div>
     </div>
   </div>
