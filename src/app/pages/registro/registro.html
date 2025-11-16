@@ -17,6 +17,7 @@
             nz-input
             id="busquedaEmpleado"
             [(ngModel)]="busquedaEmpleado"
+            [ngModelOptions]="{standalone: true}"
             (input)="onEmpleadoSearch($event)"
             placeholder="Buscar por nombre, apellidos, DNI o email"
             autocomplete="off"
@@ -218,6 +219,38 @@
   >
     <ng-container *nzModalContent>
       <p>Los datos se han registrado correctamente.</p>
+    </ng-container>
+  </nz-modal>
+
+  <!-- Modal de éxito para actualización -->
+  <nz-modal
+    [(nzVisible)]="isUpdateSuccessVisible"
+    nzTitle="ACTUALIZACIÓN COMPLETADA"
+    (nzOnOk)="handleUpdateSuccessOk()"
+    nzOkText="Cerrar"
+    [nzCancelText]="null"
+    [nzMaskClosable]="false"
+    [nzCentered]="true"
+    [nzClosable]="false"
+  >
+    <ng-container *nzModalContent>
+      <p>El empleado se ha actualizado correctamente.</p>
+    </ng-container>
+  </nz-modal>
+
+  <!-- Modal de éxito para eliminación -->
+  <nz-modal
+    [(nzVisible)]="isDeleteSuccessVisible"
+    nzTitle="ELIMINACIÓN COMPLETADA"
+    (nzOnOk)="handleDeleteSuccessOk()"
+    nzOkText="Cerrar"
+    [nzCancelText]="null"
+    [nzMaskClosable]="false"
+    [nzCentered]="true"
+    [nzClosable]="false"
+  >
+    <ng-container *nzModalContent>
+      <p>El empleado se ha eliminado correctamente.</p>
     </ng-container>
   </nz-modal>
 </div>

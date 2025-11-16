@@ -48,7 +48,8 @@ export class Registro implements OnInit, OnDestroy {
 
   isConfirmVisible = false;
   isSuccessVisible = false;
-  isUpdateVisible = false;
+  isUpdateSuccessVisible = false;
+  isDeleteSuccessVisible = false;
   loading = false;
   isUpdating = false;
 
@@ -174,7 +175,6 @@ export class Registro implements OnInit, OnDestroy {
     };
 
     this.loading = true;
-    this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
 
     this.api
       .create(dto)
@@ -187,8 +187,18 @@ export class Registro implements OnInit, OnDestroy {
       .subscribe({
         next: (res: EmpleadoDto) => {
           this.msg.success(`Empleado ${res.nombre} creado`);
-          this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
+          this.validateForm.reset();
+          this.validateForm.patchValue({ phoneNumberPrefix: '+34' });
+          this.empleadoSeleccionado = null;
+          this.busquedaEmpleado = '';
+          this.empleadosFiltrados = [];
           this.isSuccessVisible = true;
+          // Recargar lista de empleados
+          this.api.getAll().subscribe({
+            next: (data) => {
+              this.empleados = data;
+            },
+          });
         },
         error: (err: HttpErrorResponse) => {
           if (err?.status === 409) {
@@ -205,8 +215,29 @@ export class Registro implements OnInit, OnDestroy {
   handleConfirmCancel(): void {
     this.isConfirmVisible = false;
   }
+
   handleSuccessOk(): void {
     this.isSuccessVisible = false;
+  }
+
+  handleUpdateSuccessOk(): void {
+    this.isUpdateSuccessVisible = false;
+    // Limpiar formulario tras cerrar modal de éxito
+    this.empleadoSeleccionado = null;
+    this.busquedaEmpleado = '';
+    this.empleadosFiltrados = [];
+    this.validateForm.reset();
+    this.validateForm.controls['phoneNumberPrefix'].setValue('+34');
+  }
+
+  handleDeleteSuccessOk(): void {
+    this.isDeleteSuccessVisible = false;
+    // Limpiar formulario tras cerrar modal de éxito
+    this.empleadoSeleccionado = null;
+    this.busquedaEmpleado = '';
+    this.empleadosFiltrados = [];
+    this.validateForm.reset();
+    this.validateForm.controls['phoneNumberPrefix'].setValue('+34');
   }
 
   updateEmpleado(): void {
@@ -284,10 +315,15 @@ export class Registro implements OnInit, OnDestroy {
       addIfChanged('contrasena', v.password);
     }
 
-    // If no changes, inform user
+    // If no changes, inform user and clean form
     if (Object.keys(dto).length === 0) {
       this.isUpdating = false;
       this.msg.info('No hay cambios para actualizar');
+      this.empleadoSeleccionado = null;
+      this.busquedaEmpleado = '';
+      this.empleadosFiltrados = [];
+      this.validateForm.reset();
+      this.validateForm.controls['phoneNumberPrefix'].setValue('+34');
       return;
     }
 
@@ -300,9 +336,8 @@ export class Registro implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res: EmpleadoDto) => {
-          this.msg.success(`Empleado ${res.nombre} actualizado correctamente`);
-          this.empleadoSeleccionado = res;
-          this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
+          // Mostrar modal de éxito
+          this.isUpdateSuccessVisible = true;
           // Recargar lista de empleados
           this.api.getAll().subscribe({
             next: (data) => {
@@ -337,9 +372,8 @@ export class Registro implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          this.msg.success('Empleado eliminado correctamente');
-          this.validateForm.reset({ phoneNumberPrefix: '+34', rol: '' });
-          this.empleadoSeleccionado = null;
+          // Mostrar modal de éxito
+          this.isDeleteSuccessVisible = true;
           // Recargar lista de empleados
           this.api.getAll().subscribe({
             next: (data) => {
