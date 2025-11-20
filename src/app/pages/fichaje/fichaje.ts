@@ -75,6 +75,10 @@ export class Fichaje implements AfterViewInit, OnDestroy {
         this.entradaDisabled = false;
         this.salidaDisabled = true;
       }
+    } else {
+      // Si no hay historial, habilita solo Entrada (primer fichaje)
+      this.entradaDisabled = false;
+      this.salidaDisabled = true;
     }
 
     this.updateClock();

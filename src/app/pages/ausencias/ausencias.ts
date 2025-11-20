@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, NgIf, NgForOf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AusenciasService } from '../../services/ausencias.service';
-import { AuthService } from '../../core/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { EmpleadosService, EmpleadoDto } from '../../services/empleados.service';
 
 interface Absence {
@@ -23,7 +24,7 @@ interface Absence {
   templateUrl: './ausencias.html',
   styleUrls: ['./ausencias.scss']
 })
-export class Ausencias implements OnInit {
+export class Ausencias implements OnInit, OnDestroy {
   absenceStart = '';
   absenceEnd = '';
   absenceReason = '';
@@ -53,19 +54,36 @@ export class Ausencias implements OnInit {
   filteredEmpleados: EmpleadoDto[] = [];
   showEmpleadosList = false;
 
+  private authSubscription?: Subscription;
+
   constructor(
     private api: AusenciasService,
     private authService: AuthService,
-    private empleadosService: EmpleadosService
+    private empleadosService: EmpleadosService,
+    private cdr: ChangeDetectorRef
   ) {
     // Establecer la fecha mínima a hoy
     this.minDate = this.getTodayString();
   }
 
   ngOnInit() {
-    // Verificar si es admin
-    this.authService.state$.subscribe(state => {
+    // Verificar si es admin - mantener la suscripción activa
+    this.authSubscription = this.authService.state$.subscribe(state => {
+      const wasAdmin = this.isAdmin;
       this.isAdmin = state.rol === 'Admin';
+
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+
+      // Si cambió de no-admin a admin, cargar empleados
+      if (!wasAdmin && this.isAdmin) {
+        this.loadEmpleados();
+      }
+
+      // Si cambió de admin a no-admin, limpiar selección
+      if (wasAdmin && !this.isAdmin) {
+        this.clearEmpleadoSelection();
+      }
     });
 
     if (this.isAdmin) {
@@ -73,6 +91,13 @@ export class Ausencias implements OnInit {
     }
 
     this.loadAbsencesFromServer();
+  }
+
+  ngOnDestroy() {
+    // Limpiar la suscripción al destruir el componente
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 
   private loadAbsencesFromServer() {
@@ -160,10 +185,24 @@ export class Ausencias implements OnInit {
     if (!this.pendingAbsence) return;
 
     this.loading = true;
-    // Enviar fechas en formato ISO 8601 sin la Z al final
+    // Crear fechas locales sin conversión UTC
+    const fechaInicio = new Date(this.pendingAbsence.start + 'T00:00:00');
+    const fechaFin = new Date(this.pendingAbsence.end + 'T23:59:59');
+
+    // Formatear como string ISO sin la Z (hora local)
+    const formatLocalISO = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    };
+
     const dto = {
-      FechaInicio: this.pendingAbsence.start + 'T00:00:00',
-      FechaFin: this.pendingAbsence.end + 'T23:59:59',
+      FechaInicio: formatLocalISO(fechaInicio),
+      FechaFin: formatLocalISO(fechaFin),
       Motivo: this.pendingAbsence.motivo
     };
 

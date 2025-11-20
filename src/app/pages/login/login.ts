@@ -67,7 +67,7 @@ export class Login implements OnInit {
 
         // 🚦 Redirección según rol
         if (res.rol === 'Admin') {
-          this.router.navigateByUrl('/registro'); // o a tu dashboard de admin
+          this.router.navigateByUrl('/fichaje'); // o a tu dashboard de admin
         } else {
           this.router.navigateByUrl('/fichaje');        // ruta para usuarios
         }
