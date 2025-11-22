@@ -40,6 +40,7 @@ export class Ausencias implements OnInit, OnDestroy {
   showSuccess = false;
   showEmailConfirm = false;
   showDeleteConfirm = false;
+  showDeleteSuccess = false;
   showError = false;
   errorMessage = '';
   deleteId = '';
@@ -341,6 +342,8 @@ export class Ausencias implements OnInit, OnDestroy {
         this.absences = this.absences.filter(a => a.id !== this.deleteId);
         this.loading = false;
         this.deleteId = '';
+        // Mostrar modal de éxito
+        this.showDeleteSuccess = true;
       },
       error: () => {
         this.loading = false;
@@ -354,6 +357,10 @@ export class Ausencias implements OnInit, OnDestroy {
   cancelDelete() {
     this.showDeleteConfirm = false;
     this.deleteId = '';
+  }
+
+  closeDeleteSuccess() {
+    this.showDeleteSuccess = false;
   }
 
   closeError() {
