@@ -273,6 +273,17 @@ h1 {
   color: #001529;
 }
 
+.modal-footer-app .btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
+}
+.modal-footer-app .btn-warning:hover {
+  background-color: #e0a800;
+  box-shadow: 0 6px 16px rgba(255, 193, 7, 0.45);
+}
+
 /* Large screen scaling */
 @media (min-width: 1200px) {
   h1 {

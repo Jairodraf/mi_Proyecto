@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, NgIf, NgForOf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AusenciasService } from '../../services/ausencias.service';
@@ -20,7 +20,7 @@ interface Absence {
 @Component({
   selector: 'app-ausencias',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgForOf],
+  imports: [CommonModule, FormsModule],
   templateUrl: './ausencias.html',
   styleUrls: ['./ausencias.scss']
 })
@@ -44,6 +44,10 @@ export class Ausencias implements OnInit, OnDestroy {
   errorMessage = '';
   deleteId = '';
   lastCreatedAbsence: Absence | null = null;
+  showStatusEmailConfirm = false;
+  showStatusSuccess = false;
+  statusChangeMessage = '';
+  pendingStatusChange: { absence: Absence, nuevoEstado: boolean } | null = null;
   minDate = '';  // para bloquear fechas pasadas
 
   // Funcionalidad admin
@@ -138,17 +142,22 @@ export class Ausencias implements OnInit, OnDestroy {
       return;
     }
 
-    const start = new Date(this.absenceStart + 'T00:00:00');
-    const end = new Date(this.absenceEnd + 'T23:59:59');
+    // Crear fechas solo con año-mes-día para comparación (sin horas)
+    const startDate = new Date(this.absenceStart);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(this.absenceEnd);
+    endDate.setHours(0, 0, 0, 0);
+
     const today = this.getTodayDate();
 
     // Validar que la fecha de inicio no sea anterior a hoy
-    if (start < today) {
+    if (startDate < today) {
       this.showDateWarning = true;
       return;
     }
 
-    if (end < start) {
+    if (endDate < startDate) {
       this.showDateError = true;
       return;
     }
@@ -170,9 +179,7 @@ export class Ausencias implements OnInit, OnDestroy {
     };
 
     this.showConfirm = true;
-  }
-
-  closeDateWarning() {
+  }  closeDateWarning() {
     this.showDateWarning = false;
   }
 
@@ -183,6 +190,9 @@ export class Ausencias implements OnInit, OnDestroy {
 
   confirmAndEmail() {
     if (!this.pendingAbsence) return;
+
+    // Cerrar el modal de confirmación
+    this.showConfirm = false;
 
     this.loading = true;
     // Crear fechas locales sin conversión UTC
@@ -236,7 +246,7 @@ export class Ausencias implements OnInit, OnDestroy {
         this.showEmailConfirm = true;
         this.resetForm();
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
         this.errorMessage = 'Error al registrar la ausencia en el servidor';
         this.showError = true;
@@ -249,6 +259,56 @@ export class Ausencias implements OnInit, OnDestroy {
     const endStr = this.formatDateES(a.end);
     const dias = this.getDays(a);
 
+    // Obtener el empleadoId del usuario actual
+    const empleadoId = this.authService.empleadoId;
+
+    if (!empleadoId) {
+      // Si no hay empleadoId, enviar sin firma
+      this.sendEmailWithoutSignature(startStr, endStr, dias, a.motivo);
+      return;
+    }
+
+    // Obtener los datos del empleado para la firma
+    this.empleadosService.getAll().subscribe({
+      next: (empleados: EmpleadoDto[]) => {
+        const empleado = empleados.find(e => e.id === empleadoId);
+
+        if (!empleado) {
+          this.sendEmailWithoutSignature(startStr, endStr, dias, a.motivo);
+          return;
+        }
+
+        const bodyLines = [
+          'Hola,',
+          '',
+          'Solicito la siguiente ausencia:',
+          `· Inicio: ${startStr}`,
+          `· Fin: ${endStr}`,
+          `· Días: ${dias}`,
+          `· Motivo: ${a.motivo}`,
+          '',
+          'Gracias y un saludo.',
+          '',
+          '---',
+          `${empleado.nombre} ${empleado.apellidos}`,
+          `DNI: ${empleado.dni}`,
+          `Email: ${empleado.email}`,
+          `Teléfono: ${empleado.telefono || 'No especificado'}`
+        ];
+
+        const subject = `Solicitud de ausencia: ${startStr} - ${endStr}`;
+        const mailto = `mailto:jaime.rodriguez.rafael@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
+        window.location.href = mailto;
+      },
+      error: () => {
+        // Si hay error al obtener el empleado, enviar sin firma
+        this.sendEmailWithoutSignature(startStr, endStr, dias, a.motivo);
+      }
+    });
+  }
+
+  private sendEmailWithoutSignature(startStr: string, endStr: string, dias: number, motivo: string) {
     const bodyLines = [
       'Hola,',
       '',
@@ -256,7 +316,7 @@ export class Ausencias implements OnInit, OnDestroy {
       `· Inicio: ${startStr}`,
       `· Fin: ${endStr}`,
       `· Días: ${dias}`,
-      `· Motivo: ${a.motivo}`,
+      `· Motivo: ${motivo}`,
       '',
       'Gracias y un saludo.'
     ];
@@ -425,13 +485,96 @@ export class Ausencias implements OnInit, OnDestroy {
     if (!this.isAdmin) return;
 
     const nuevoEstado = !absence.aceptada;
+
+    // Ejecutar el cambio de estado
     this.api.actualizarEstado(absence.id, nuevoEstado).subscribe({
       next: () => {
         absence.aceptada = nuevoEstado;
+        // Guardar para el envío de email
+        this.pendingStatusChange = { absence, nuevoEstado };
+        // Mostrar modal de éxito
+        this.statusChangeMessage = nuevoEstado ? 'La ausencia ha sido Aceptada' : 'La ausencia ha sido Denegada';
+        this.showStatusSuccess = true;
       },
       error: () => {
         this.errorMessage = 'Error al actualizar el estado de la ausencia';
         this.showError = true;
+      }
+    });
+  }
+
+  handleStatusSuccessOk() {
+    this.showStatusSuccess = false;
+    // Mostrar modal de confirmación de email
+    this.showStatusEmailConfirm = true;
+  }
+
+  confirmStatusEmail() {
+    this.showStatusEmailConfirm = false;
+    if (!this.pendingStatusChange) return;
+
+    const { absence, nuevoEstado } = this.pendingStatusChange;
+
+    // Enviar email de notificación
+    this.sendStatusChangeEmail(absence, nuevoEstado);
+    this.pendingStatusChange = null;
+  }
+
+  cancelStatusEmail() {
+    this.showStatusEmailConfirm = false;
+    this.pendingStatusChange = null;
+  }
+
+  private sendStatusChangeEmail(absence: Absence, aceptada: boolean) {
+    const startStr = this.formatDateES(absence.start);
+    const endStr = this.formatDateES(absence.end);
+    const dias = this.getDays(absence);
+    const estado = aceptada ? 'ACEPTADA' : 'DENEGADA';
+
+    // Obtener el empleadoId del admin actual
+    const adminId = this.authService.empleadoId;
+
+    // Obtener datos del empleado al que se le cambió el estado y del admin
+    this.empleadosService.getAll().subscribe({
+      next: (empleados: EmpleadoDto[]) => {
+        const empleado = empleados.find(e => e.id === absence.empleadoId);
+
+        if (!empleado || !empleado.email) {
+          return;
+        }
+
+        // Buscar los datos del admin para la firma
+        const admin = adminId ? empleados.find(e => e.id === adminId) : null;
+
+        const bodyLines = [
+          `Hola ${empleado.nombre},`,
+          '',
+          `Tu solicitud de ausencia ha sido ${estado}:`,
+          `· Inicio: ${startStr}`,
+          `· Fin: ${endStr}`,
+          `· Días: ${dias}`,
+          `· Motivo: ${absence.motivo}`,
+          '',
+          'Saludos cordiales.'
+        ];
+
+        // Añadir firma del admin si está disponible
+        if (admin) {
+          bodyLines.push('');
+          bodyLines.push('---');
+          bodyLines.push(`${admin.nombre} ${admin.apellidos}`);
+          bodyLines.push(`DNI: ${admin.dni}`);
+          bodyLines.push(`Email: ${admin.email}`);
+          bodyLines.push(`Teléfono: ${admin.telefono || 'No especificado'}`);
+        }
+
+        const subject = `Ausencia ${estado}: ${startStr} - ${endStr}`;
+        const mailto = `mailto:${empleado.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
+        window.location.href = mailto;
+      },
+      error: () => {
+        console.error('Error al obtener datos del empleado para enviar email');
       }
     });
   }

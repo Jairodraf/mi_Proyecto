@@ -50,6 +50,9 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   filterEnd: string = '';
 
   incidenceText: string = '';
+  isIncidenceSuccessVisible: boolean = false;
+  isFichajeSuccessVisible: boolean = false;
+  fichajeConfirmData = { tipo: '', fecha: '', hora: '' };
 
   filteredGroups: Array<{
     date: string;
@@ -274,6 +277,9 @@ export class Fichaje implements AfterViewInit, OnDestroy {
           // guarda el id para poder actualizar Observacion más tarde
           this.history[this.lastEntryIndex!].id = res.id;
           this.saveHistory();
+          // Mostrar modal de confirmación
+          this.fichajeConfirmData = { tipo: 'Entrada', fecha: date, hora: time };
+          this.isFichajeSuccessVisible = true;
         },
         error: () => this.msg.error('No se pudo registrar la Entrada en servidor'),
       });
@@ -297,6 +303,9 @@ export class Fichaje implements AfterViewInit, OnDestroy {
         next: (res: FichajeDto) => {
           this.history[this.lastExitIndex!].id = res.id;
           this.saveHistory();
+          // Mostrar modal de confirmación
+          this.fichajeConfirmData = { tipo: 'Salida', fecha: date, hora: time };
+          this.isFichajeSuccessVisible = true;
         },
         error: () => this.msg.error('No se pudo registrar la Salida en servidor'),
       });
@@ -328,12 +337,22 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     const id = this.history[idx].id;
     if (id) {
       this.api.actualizarObservacion(id, text).subscribe({
-        next: () => this.msg.success('Incidencia guardada'),
+        next: () => {
+          this.isIncidenceSuccessVisible = true;
+        },
         error: () => this.msg.error('No se pudo guardar la incidencia en el servidor'),
       });
     } else {
       this.msg.warning('Incidencia guardada localmente (pendiente de sincronizar)');
     }
+  }
+
+  handleIncidenceSuccessOk(): void {
+    this.isIncidenceSuccessVisible = false;
+  }
+
+  handleFichajeSuccessOk(): void {
+    this.isFichajeSuccessVisible = false;
   }
 
   // … (resto de tu código: filtros, agrupación, utilidades)

@@ -157,8 +157,6 @@ export class Registro implements OnInit, OnDestroy {
       return;
     }
 
-    this.isConfirmVisible = false;
-
     const v = this.validateForm.getRawValue();
     const rol = (v.rol || '').toString().toLowerCase() === 'admin' ? 'Admin' : 'User';
     const telefonoRaw = `${v.phoneNumberPrefix ?? ''}${v.phoneNumber ?? ''}`.replace(/\s+/g, '');
@@ -186,6 +184,7 @@ export class Registro implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res: EmpleadoDto) => {
+          this.isConfirmVisible = false;
           this.msg.success(`Empleado ${res.nombre} creado`);
           this.validateForm.reset();
           this.validateForm.patchValue({ phoneNumberPrefix: '+34' });
@@ -273,7 +272,6 @@ export class Registro implements OnInit, OnDestroy {
   handleUpdateOk(): void {
     if (!this.empleadoSeleccionado) return;
 
-    this.isConfirmVisible = false;
     this.isUpdating = true;
     const v = this.validateForm.getRawValue();
 
@@ -336,6 +334,7 @@ export class Registro implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res: EmpleadoDto) => {
+          this.isConfirmVisible = false;
           // Mostrar modal de éxito
           this.isUpdateSuccessVisible = true;
           // Recargar lista de empleados
@@ -360,7 +359,6 @@ export class Registro implements OnInit, OnDestroy {
   handleDeleteOk(): void {
     if (!this.empleadoSeleccionado) return;
 
-    this.isConfirmVisible = false;
     this.loading = true;
 
     this.api
@@ -372,6 +370,7 @@ export class Registro implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
+          this.isConfirmVisible = false;
           // Mostrar modal de éxito
           this.isDeleteSuccessVisible = true;
           // Recargar lista de empleados

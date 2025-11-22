@@ -319,3 +319,86 @@ h1 {
 .card.mt-3:last-of-type {
   margin-bottom: 80px;
 }
+
+/* ========================
+   CUSTOM MODAL STYLES
+   ======================== */
+.modal-backdrop-app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+}
+
+.modal-card-app {
+  width: min(540px, 92vw);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.modal-header-app {
+  padding: 12px 16px;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-body-app {
+  padding: 16px;
+
+  .fichaje-info {
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    margin-top: 8px;
+
+    p {
+      margin: 6px 0;
+      text-align: left;
+      font-size: 14px;
+    }
+  }
+
+  p {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+}
+
+.modal-footer-app {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f7f8fa;
+
+  &.justify-content-center {
+    justify-content: center;
+  }
+
+  button {
+    padding: 8px 20px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.btn-success {
+      background: #28a745;
+      color: #ffffff;
+
+      &:hover {
+        background: #218838;
+      }
+    }
+  }
+}
