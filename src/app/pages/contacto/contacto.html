@@ -14,29 +14,26 @@
           <h5 class="mb-0 fw-bold fs-5">Formulario de Contacto</h5>
         </div>
         <div class="card-body">
-            <form action="ContactoServlet" method="post" class="needs-validation" novalidate>
+            <form (ngSubmit)="onSubmit()" #contactForm="ngForm">
               <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre</label>
                 <input type="text" class="form-control" style="margin-left: 10px;" id="nombre" name="nombre"
-                       autocomplete="off" required>
-                <div class="invalid-feedback">Introduce tu nombre.</div>
+                       [(ngModel)]="nombre" autocomplete="off" required>
               </div>
 
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input type="email" class="form-control" style="margin-left: 10px;" id="email" name="email"
-                       autocomplete="off" required>
-                <div class="invalid-feedback">Introduce un email válido.</div>
+                       [(ngModel)]="email" autocomplete="off" required>
               </div>
 
               <div class="mb-3">
                 <label for="mensaje" class="form-label">Mensaje</label>
-                <textarea class="form-control" style="margin-left: 10px;" id="mensaje" name="mensaje" rows="10" style="width: 100%;"
-                         minlength="10" required autocomplete="off"></textarea>
-                <div class="invalid-feedback">El mensaje debe tener al menos 10 caracteres.</div>
+                <textarea class="form-control" style="margin-left: 10px;" id="mensaje" name="mensaje" rows="10"
+                         [(ngModel)]="mensaje" minlength="10" required autocomplete="off"></textarea>
               </div>
 
-            <button class="btn btn-primary btn-lg w-100 login-form-button">
+            <button type="submit" class="btn btn-primary btn-lg w-100 login-form-button">
               Enviar
             </button>
           </form>
