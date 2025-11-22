@@ -8,15 +8,6 @@
   padding: 0 1rem;
 }
 
-/* === Título principal === */
-h1 {
-  color: #001529;
-  margin-top: 80px;
-  margin-bottom: 40px;
-  text-align: center;
-  font-weight: 600;
-}
-
 /* === Contenedor general === */
 .container-fluid.py-4 {
   display: flex;
@@ -286,11 +277,6 @@ h1 {
 
 /* Large screen scaling */
 @media (min-width: 1200px) {
-  h1 {
-    font-size: 2.2rem;
-    margin-bottom: 50px;
-  }
-
   #absenceCard {
     max-width: 700px;
   }

@@ -1,14 +1,21 @@
 <div class="formulario-registro">
-  <!-- Encabezado de registro -->
-  <div class="col-12 mb-3">
-    <h1 class="display-4 text-center" style="color: #001529; font-size: 30px">
-      Registro Empleados
-    </h1>
-  </div>
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <!-- Encabezado de registro -->
+      <div class="col-12 mb-4">
+        <div class="page-header-box">
+          <h1>Registro Empleados</h1>
+        </div>
+      </div>
 
-  <!-- Formulario de registro -->
-  <div class="registro-container">
-    <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
+      <!-- Card del formulario -->
+      <div class="col-lg-10 col-xl-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white d-flex align-items-center justify-content-center" style="min-height: 60px;">
+            <h5 class="mb-0 fw-bold fs-5">Gestión de Empleados</h5>
+          </div>
+          <div class="card-body">
+            <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
       <!-- Buscar Empleado -->
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzFor="busquedaEmpleado">Buscar Empleado</nz-form-label>
@@ -180,6 +187,10 @@
         </nz-form-control>
       </nz-form-item>
     </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal de confirmación para REGISTRO (estilo personalizado) -->

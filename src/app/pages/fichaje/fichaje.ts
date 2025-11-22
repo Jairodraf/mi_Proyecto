@@ -1,5 +1,5 @@
 import { Component, OnDestroy, AfterViewInit, inject } from '@angular/core';
-import { CommonModule, NgForOf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { FichajesService, FichajeCreateDto, FichajeDto } from '../../services/fichajes.service';
@@ -22,7 +22,7 @@ interface HistoryItem {
 @Component({
   selector: 'app-fichaje',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgForOf],
+  imports: [CommonModule, FormsModule],
   templateUrl: './fichaje.html',
   styleUrls: ['./fichaje.scss'],
 })
