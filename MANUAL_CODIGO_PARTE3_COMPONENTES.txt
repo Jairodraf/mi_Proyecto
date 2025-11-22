@@ -570,8 +570,6 @@ export class Footer {
 └─────────────────────────────────────────────────────────────────────────────┘
 ```html
 <footer class="footer">
-  <div class="footer-empty"></div>
-
   <h3 class="copyright">© 2025 FichajeApp - Todos los derechos reservados</h3>
 
   <div class="footer-links">

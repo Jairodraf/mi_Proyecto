@@ -95,3 +95,45 @@
     padding: 6px 10px;
   }
 }
+
+/* 🖥️ Optimización para pantallas grandes (Full HD+) */
+@media (min-width: 1920px) {
+  .footer {
+    padding: 20px 40px;
+  }
+
+  .footer h3 {
+    font-size: 20px;
+  }
+
+  .footer-links {
+    gap: 14px;
+  }
+
+  .footer-links a {
+    font-size: 20px;
+    padding: 10px 20px;
+    border-radius: 14px;
+  }
+}
+
+/* 🖥️ Optimización para pantallas 2K/4K (2560px+) */
+@media (min-width: 2560px) {
+  .footer {
+    padding: 24px 60px;
+  }
+
+  .footer h3 {
+    font-size: 22px;
+  }
+
+  .footer-links {
+    gap: 18px;
+  }
+
+  .footer-links a {
+    font-size: 22px;
+    padding: 12px 24px;
+    border-radius: 16px;
+  }
+}

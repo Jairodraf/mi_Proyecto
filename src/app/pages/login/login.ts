@@ -1,5 +1,6 @@
 // src/app/pages/login/login.ts
 import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -13,13 +14,14 @@ import { AuthService } from '../../services/auth.service'; // ⬅️ IMPORTANTE
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, NzButtonModule, NzFormModule, NzInputModule],
+  imports: [CommonModule, ReactiveFormsModule, NzButtonModule, NzFormModule, NzInputModule],
   templateUrl: './login.html',
   styleUrls: ['./login.scss'],
 })
 export class Login implements OnInit {
   validateForm: FormGroup;
   loading = false;
+  showLoginError = false;
 
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
@@ -73,8 +75,16 @@ export class Login implements OnInit {
         }
       },
       error: (err) => {
-        this.msg.error(err?.status === 401 ? 'Credenciales inválidas' : 'Error de conexión');
+        if (err?.status === 401) {
+          this.showLoginError = true;
+        } else {
+          this.msg.error('Error de conexión');
+        }
       }
     });
+  }
+
+  closeLoginError() {
+    this.showLoginError = false;
   }
 }

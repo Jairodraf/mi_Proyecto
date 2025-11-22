@@ -124,3 +124,84 @@ body {
   }
 }
 
+/* Optimización para pantallas grandes (Full HD+) */
+@media (min-width: 1920px) {
+  .page-header-box {
+    max-width: 900px;
+    padding: 35px 24px;
+  }
+
+  .page-header-box h1 {
+    font-size: 44px;
+  }
+
+  main {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+
+  /* Limitar ancho de contenedores de cards */
+  .container-fluid {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* Mejorar legibilidad de cards */
+  .card-body {
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  .card-header {
+    font-size: 20px;
+  }
+}
+
+/* Optimización para pantallas 2K/4K (2560px+) */
+@media (min-width: 2560px) {
+  .page-header-box {
+    max-width: 1000px;
+    padding: 40px 28px;
+  }
+
+  .page-header-box h1 {
+    font-size: 48px;
+  }
+
+  main {
+    padding-left: 10%;
+    padding-right: 10%;
+  }
+
+  /* Limitar ancho máximo para mejor legibilidad */
+  .container-fluid {
+    max-width: 1800px;
+  }
+
+  .card-body {
+    font-size: 20px;
+    line-height: 1.8;
+  }
+
+  .card-header {
+    font-size: 22px;
+    min-height: 70px !important;
+  }
+
+  /* Aumentar tamaño de botones */
+  .btn-lg {
+    font-size: 20px;
+    padding: 14px 24px;
+  }
+
+  /* Mejorar formularios */
+  .form-control, .form-select {
+    font-size: 18px;
+    padding: 12px 16px;
+  }
+
+  .form-label {
+    font-size: 18px;
+  }
+}
+
