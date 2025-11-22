@@ -3,15 +3,24 @@
   left: 0;
   right: 0;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.95);
-  padding-top: 20px;
-  padding: 10px 20px;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.03);
+  background: linear-gradient(135deg,
+    rgba(13, 110, 253, 0.08) 0%,
+    rgba(13, 202, 240, 0.05) 50%,
+    rgba(255, 255, 255, 0.92) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 16px 20px;
+  box-shadow: 0 -6px 20px rgba(13, 110, 253, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 2px solid rgba(13, 110, 253, 0.08);
+  border-top: 3px solid rgba(13, 110, 253, 0.3);
   flex-wrap: wrap; /* permite reorganizar en móviles */
+  transition: all 0.3s ease;
+}
+
+.footer:hover {
+  box-shadow: 0 -8px 25px rgba(13, 110, 253, 0.18);
 }
 
 .footer h3 {
@@ -20,7 +29,8 @@
   color: #001529;
   margin: 0;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .footer-links {
@@ -34,26 +44,29 @@
 .footer-links a {
   color: #001529;
   text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-weight: 500;
-  transition: all 0.25s ease;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 /* 🔹 Hover */
 .footer-links a:hover {
   background-color: #0d6efd;
   color: #fff;
-  box-shadow: 0 0 10px rgba(13, 110, 253, 0.3);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(13, 110, 253, 0.35);
+  transform: translateY(-3px);
+  border-color: rgba(13, 110, 253, 0.5);
 }
 
 /* 🔹 Activo */
 .footer-links a.active {
   background-color: #0d6efd;
   color: #fff;
-  font-weight: 600;
-  box-shadow: 0 0 12px rgba(13, 110, 253, 0.25);
+  font-weight: 700;
+  box-shadow: 0 4px 18px rgba(13, 110, 253, 0.4);
+  border-color: rgba(13, 110, 253, 0.6);
 }
 
 /* No forzamos padding en main anymore — layout uses flex so footer is after content */

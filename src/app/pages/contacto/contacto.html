@@ -1,13 +1,19 @@
-  <!-- Encabezado de registro -->
-  <div class="col-12 mb-3">
-    <h1 class="display-4 text-center" style="color: #001529; font-size:30px;">
-      Contacto
-    </h1>
-  </div>
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <!-- Encabezado de contacto -->
+    <div class="col-12 mb-4">
+      <div class="page-header-box">
+        <h1>Contacto</h1>
+      </div>
+    </div>
 
-        <!-- Formulario de contacto -->
-        <div class="card shadow-sm">
-          <div class="card-body">
+    <!-- Formulario de contacto -->
+    <div class="col-lg-8 col-xl-7">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-center" style="min-height: 60px;">
+          <h5 class="mb-0 fw-bold fs-5">Formulario de Contacto</h5>
+        </div>
+        <div class="card-body">
             <form action="ContactoServlet" method="post" class="needs-validation" novalidate>
               <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre</label>
@@ -30,9 +36,12 @@
                 <div class="invalid-feedback">El mensaje debe tener al menos 10 caracteres.</div>
               </div>
 
-              <button class="btn btn-primary btn-lg w-100 login-form-button">
-                Enviar
-              </button>
-            </form>
-          </div>
+            <button class="btn btn-primary btn-lg w-100 login-form-button">
+              Enviar
+            </button>
+          </form>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
