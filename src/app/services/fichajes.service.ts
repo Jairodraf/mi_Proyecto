@@ -46,6 +46,6 @@ export class FichajesService {
 
   // Obtener todos los fichajes (endpoint para administradores)
   todos(): Observable<FichajeDto[]> {
-    return this.http.get<FichajeDto[]>(this.base);
+    return this.http.get<FichajeDto[]>(`${this.base}?all=true`);
   }
 }

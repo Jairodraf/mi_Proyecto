@@ -8,6 +8,47 @@
         </h1>
       </div>
 
+      <!-- Cuadro de búsqueda de empleados (solo para Admin) -->
+      <div *ngIf="isAdmin" class="col-12 mb-3">
+        <div class="row justify-content-center">
+          <div class="col-12 col-md-6">
+            <div class="card shadow-sm">
+              <div class="card-header bg-info text-white">Buscar fichajes por empleado</div>
+              <div class="card-body">
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Buscar por nombre, apellidos, DNI o email..."
+                    [(ngModel)]="searchQuery"
+                    (input)="onEmpleadoSearch($event)"
+                    (focus)="showEmpleadosList = true"
+                  />
+                  <button class="btn btn-outline-secondary" type="button" (click)="clearEmpleadoSelection()" *ngIf="selectedEmpleadoId">
+                    <span>✕</span> Limpiar
+                  </button>
+                </div>
+
+                <!-- Lista de empleados filtrados -->
+                <div *ngIf="showEmpleadosList && filteredEmpleados.length > 0" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">
+                  <button
+                    *ngFor="let emp of filteredEmpleados"
+                    class="list-group-item list-group-item-action"
+                    (click)="selectEmpleado(emp)"
+                  >
+                    {{ emp.nombre }} {{ emp.apellidos }} - {{ emp.dni }}
+                  </button>
+                </div>
+
+                <div *ngIf="showEmpleadosList && filteredEmpleados.length === 0 && searchQuery" class="alert alert-info mt-2 mb-0">
+                  No se encontraron empleados.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Contenido principal de la página de fichaje -->
       <div class="col-12">
         <div class="row gx-3 justify-content-center align-items-start">

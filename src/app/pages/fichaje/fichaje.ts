@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { FichajesService, FichajeCreateDto, FichajeDto } from '../../services/fichajes.service';
 import { AuthService } from '../../services/auth.service';
+import { EmpleadosService, EmpleadoDto } from '../../services/empleados.service';
 
 type PunchType = 'Entrada' | 'Salida';
 type LastPressed = 'ENTRADA' | 'SALIDA';
@@ -15,6 +16,7 @@ interface HistoryItem {
   time: string;
   ts: string;
   incidence?: string;
+  empleadoId?: number; // <-- para filtrar por empleado
 }
 
 @Component({
@@ -28,6 +30,7 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   private api = inject(FichajesService);
   private msg = inject(NzMessageService);
   private auth = inject(AuthService);
+  private empleadosService = inject(EmpleadosService);
 
   // … (tus propiedades tal cual)
   lastType: string = '—';
@@ -53,6 +56,14 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   isIncidenceSuccessVisible: boolean = false;
   isFichajeSuccessVisible: boolean = false;
   fichajeConfirmData = { tipo: '', fecha: '', hora: '' };
+
+  // Funcionalidad admin
+  isAdmin = false;
+  empleados: EmpleadoDto[] = [];
+  selectedEmpleadoId: number | null = null;
+  searchQuery = '';
+  filteredEmpleados: EmpleadoDto[] = [];
+  showEmpleadosList = false;
 
   filteredGroups: Array<{
     date: string;
@@ -87,6 +98,12 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     this.updateClock();
     this.clockIntervalId = setInterval(() => this.updateClock(), 1000);
 
+    // Verificar si es admin
+    this.isAdmin = this.auth.rol === 'Admin';
+    if (this.isAdmin) {
+      this.loadEmpleados();
+    }
+
     // Load fichajes for the authenticated worker from backend (if logged in)
       // If user is authenticated, fetch remote fichajes.
       if (this.auth.hasToken()) {
@@ -116,7 +133,7 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     return null;
   }
 
-  // ---------- Filtrado y agrupación para “Resultados” ----------
+  // ---------- Filtrado y agrupación para "Resultados" ----------
   applyFilter() {
     if (!this.filterStart || !this.filterEnd) {
       this.filteredGroups = [];
@@ -127,7 +144,50 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     const start = new Date(this.filterStart + 'T00:00:00');
     const end = new Date(this.filterEnd + 'T23:59:59.999');
 
-    // filtra por rango y ordena por tiempo
+    // Si es admin, cargar todos los fichajes y luego filtrar
+    if (this.isAdmin) {
+      this.api.todos().subscribe({
+        next: (rows: FichajeDto[]) => {
+          // Convertir a HistoryItem
+          const allHistory = rows.map((r) => ({
+            id: r.id,
+            type: r.tipo === 'Entrada' ? 'Entrada' : 'Salida',
+            date: new Date(r.fechaHora).toLocaleDateString('es-ES'),
+            time: new Date(r.fechaHora).toLocaleTimeString('es-ES', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            }),
+            ts: r.fechaHora,
+            incidence: r.observacion ?? undefined,
+            empleadoId: r.empleadoId,
+          } as HistoryItem & { empleadoId: number }));
+
+          // Filtrar por empleado seleccionado o por el admin actual
+          const targetEmpleadoId = this.selectedEmpleadoId ?? this.auth.empleadoId;
+
+          // Filtrar por rango de fechas y por empleado
+          const items = allHistory
+            .filter((h) => {
+              const t = new Date(h.ts);
+              const inRange = t >= start && t <= end;
+              const matchesEmpleado = Number((h as any).empleadoId) === Number(targetEmpleadoId);
+              return inRange && matchesEmpleado;
+            })
+            .sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+
+          this.processFilteredItems(items);
+        },
+        error: () => {
+          this.msg.error('Error al cargar fichajes para filtrar');
+          this.filteredGroups = [];
+          this.filteredTotalMs = 0;
+        }
+      });
+      return;
+    }
+
+    // Si no es admin, filtrar desde el historial local (sus propios fichajes)
     const items = this.history
       .filter((h) => {
         const t = new Date(h.ts);
@@ -135,7 +195,12 @@ export class Fichaje implements AfterViewInit, OnDestroy {
       })
       .sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
 
-    // agrupa por fecha local
+    this.processFilteredItems(items);
+  }
+
+  private processFilteredItems(items: HistoryItem[]) {
+
+    // Agrupa por fecha local
     const byDate = new Map<string, HistoryItem[]>();
     for (const it of items) {
       const d = new Date(it.ts).toLocaleDateString('es-ES');
@@ -353,6 +418,60 @@ export class Fichaje implements AfterViewInit, OnDestroy {
 
   handleFichajeSuccessOk(): void {
     this.isFichajeSuccessVisible = false;
+  }
+
+  // Métodos para búsqueda de empleados (Admin)
+  private loadEmpleados() {
+    this.empleadosService.getAll().subscribe({
+      next: (data) => {
+        this.empleados = data;
+      },
+      error: () => {
+        this.msg.error('Error al cargar la lista de empleados');
+      }
+    });
+  }
+
+  onEmpleadoSearch(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const query = input.value.toLowerCase().trim();
+    this.searchQuery = query;
+
+    if (!query) {
+      this.filteredEmpleados = [];
+      this.showEmpleadosList = false;
+      return;
+    }
+
+    this.filteredEmpleados = this.empleados.filter(e =>
+      e.nombre.toLowerCase().includes(query) ||
+      e.apellidos.toLowerCase().includes(query) ||
+      e.dni.toLowerCase().includes(query) ||
+      e.email.toLowerCase().includes(query)
+    );
+    this.showEmpleadosList = this.filteredEmpleados.length > 0;
+  }
+
+  selectEmpleado(emp: EmpleadoDto) {
+    this.selectedEmpleadoId = emp.id;
+    this.searchQuery = `${emp.nombre} ${emp.apellidos} (${emp.dni})`;
+    this.filteredEmpleados = [];
+    this.showEmpleadosList = false;
+    // Aplicar filtro automáticamente si hay fechas seleccionadas
+    if (this.filterStart && this.filterEnd) {
+      this.applyFilter();
+    }
+  }
+
+  clearEmpleadoSelection() {
+    this.selectedEmpleadoId = null;
+    this.searchQuery = '';
+    this.filteredEmpleados = [];
+    this.showEmpleadosList = false;
+    // Aplicar filtro automáticamente si hay fechas seleccionadas
+    if (this.filterStart && this.filterEnd) {
+      this.applyFilter();
+    }
   }
 
   // … (resto de tu código: filtros, agrupación, utilidades)
