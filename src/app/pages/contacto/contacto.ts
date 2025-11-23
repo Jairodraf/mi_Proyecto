@@ -13,6 +13,7 @@ export class Contacto {
   nombre = '';
   email = '';
   mensaje = '';
+  showEmailConfirm = false;
 
   onSubmit() {
     if (!this.nombre || !this.email || !this.mensaje) {
@@ -24,6 +25,13 @@ export class Contacto {
       alert('El mensaje debe tener al menos 10 caracteres.');
       return;
     }
+
+    // Mostrar modal de confirmación
+    this.showEmailConfirm = true;
+  }
+
+  confirmEmail() {
+    this.showEmailConfirm = false;
 
     const bodyLines = [
       `Nombre: ${this.nombre}`,
@@ -42,5 +50,9 @@ export class Contacto {
     this.nombre = '';
     this.email = '';
     this.mensaje = '';
+  }
+
+  cancelEmail() {
+    this.showEmailConfirm = false;
   }
 }

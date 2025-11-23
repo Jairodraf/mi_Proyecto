@@ -1,7 +1,5 @@
 :host {
   display: block;
-  /* Use remaining viewport area after header/footer so footer remains after content */
-  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
   background: transparent !important;
   position: relative;
   z-index: 1;
@@ -150,6 +148,14 @@
   color: #664d03;
   background: #fff3cd;
   border-color: #ffecb5;
+}
+
+/* === Columna de acciones === */
+.abs-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
 }
 
 /* === Botón Eliminar (rojo igual que Registrar incidencia) === */

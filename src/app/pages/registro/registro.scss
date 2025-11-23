@@ -227,9 +227,218 @@ p{
   form[nz-form] { max-width: 1100px; padding: 32px 36px; }
 }
 
+/* Escalado para pantallas grandes (Full HD y superiores) */
+@media (min-width: 1920px) {
+  .registro-card-header {
+    min-height: 80px;
+    padding: 24px;
+  }
+
+  .registro-card-title {
+    font-size: 1.75rem;
+  }
+
+  .registro-card-body {
+    padding: 40px;
+  }
+
+  form[nz-form] {
+    max-width: 1400px;
+    padding: 48px 56px;
+  }
+
+  form[nz-form] input[nz-input] {
+    height: 52px;
+    font-size: 18px;
+  }
+
+  nz-form-label {
+    flex: 0 0 220px;
+    font-size: 18px;
+    padding-right: 16px;
+  }
+
+  .action-btn {
+    min-width: 220px;
+    height: 60px;
+    font-size: 18px;
+    padding: 12px 24px;
+  }
+
+  .actions-row {
+    gap: 24px;
+  }
+
+  .employee-item {
+    padding: 12px 16px;
+
+    strong {
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    small {
+      font-size: 14px;
+    }
+  }
+
+  .modal-card-app {
+    width: min(720px, 92vw);
+    border-radius: 16px;
+  }
+
+  .modal-header-app {
+    padding: 18px 24px;
+    font-size: 22px;
+  }
+
+  .modal-body-app {
+    padding: 24px;
+
+    .employee-info {
+      padding: 16px;
+      margin-top: 12px;
+
+      p {
+        margin: 8px 0;
+        font-size: 17px;
+      }
+    }
+
+    p {
+      font-size: 18px;
+    }
+  }
+
+  .modal-footer-app {
+    padding: 16px 24px;
+    gap: 16px;
+
+    button {
+      padding: 12px 28px;
+      font-size: 17px;
+      border-radius: 8px;
+    }
+  }
+}
+
+/* Escalado para pantallas 2K y 4K */
+@media (min-width: 2560px) {
+  .registro-card-header {
+    min-height: 100px;
+    padding: 32px;
+  }
+
+  .registro-card-title {
+    font-size: 2.25rem;
+  }
+
+  .registro-card-body {
+    padding: 56px;
+  }
+
+  form[nz-form] {
+    max-width: 1800px;
+    padding: 64px 72px;
+  }
+
+  form[nz-form] input[nz-input] {
+    height: 60px;
+    font-size: 22px;
+  }
+
+  nz-form-label {
+    flex: 0 0 280px;
+    font-size: 22px;
+    padding-right: 20px;
+  }
+
+  .action-btn {
+    min-width: 260px;
+    height: 70px;
+    font-size: 22px;
+    padding: 16px 32px;
+  }
+
+  .actions-row {
+    gap: 32px;
+  }
+
+  .employee-item {
+    padding: 16px 20px;
+
+    strong {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    small {
+      font-size: 16px;
+    }
+  }
+
+  .modal-card-app {
+    width: min(900px, 92vw);
+    border-radius: 20px;
+  }
+
+  .modal-header-app {
+    padding: 24px 32px;
+    font-size: 26px;
+  }
+
+  .modal-body-app {
+    padding: 32px;
+
+    .employee-info {
+      padding: 20px;
+      margin-top: 16px;
+
+      p {
+        margin: 10px 0;
+        font-size: 20px;
+      }
+    }
+
+    p {
+      font-size: 22px;
+    }
+  }
+
+  .modal-footer-app {
+    padding: 20px 32px;
+    gap: 20px;
+
+    button {
+      padding: 14px 36px;
+      font-size: 20px;
+      border-radius: 10px;
+    }
+  }
+}
+
 /* Ensure dropdown and absolute elements appear above footer */
 .employee-dropdown {
   z-index: 3000;
+}
+
+/* Estilos adicionales para la card de registro */
+.registro-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.registro-card-header {
+  min-height: 60px;
+  padding: 16px;
+}
+
+.registro-card-title {
+  font-size: 1.25rem;
+}
+
+.registro-card-body {
+  padding: 24px;
 }
 
 /* ========================

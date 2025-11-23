@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service'; // ⬅️ IMPORTANTE
@@ -14,14 +15,16 @@ import { AuthService } from '../../services/auth.service'; // ⬅️ IMPORTANTE
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NzButtonModule, NzFormModule, NzInputModule],
+  imports: [CommonModule, ReactiveFormsModule, NzButtonModule, NzFormModule, NzInputModule, NzIconModule],
   templateUrl: './login.html',
-  styleUrls: ['./login.scss'],
+  styleUrls: ['./login.scss']
 })
+
 export class Login implements OnInit {
   validateForm: FormGroup;
   loading = false;
   showLoginError = false;
+  passwordVisible = false;
 
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
@@ -64,8 +67,6 @@ export class Login implements OnInit {
       next: (res) => {
         // 🔐 Guarda token + rol en el AuthService (esto actualiza isAdmin$, isLogged$ del header)
         this.auth.setAuth(res.token, res.rol, res.empleadoId);
-
-        this.msg.success('Sesión iniciada');
 
         // 🚦 Redirección según rol
         if (res.rol === 'Admin') {

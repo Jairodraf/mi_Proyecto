@@ -13,8 +13,7 @@
         <nz-form-item>
           <nz-form-label>Correo electrónico</nz-form-label>
           <nz-form-control nzErrorTip="Ingrese un correo válido">
-            <nz-input-group>
-              <span nz-icon nzType="mail" nzTheme="outline"></span>
+            <nz-input-group [nzPrefix]="emailIconTemplate">
               <input
                 nz-input
                 type="email"
@@ -23,22 +22,35 @@
                 autocomplete="email"
               />
             </nz-input-group>
+            <ng-template #emailIconTemplate>
+              <span nz-icon nzType="mail" nzTheme="outline" style="font-size: 18px; color: rgba(0, 0, 0, 0.45);"></span>
+            </ng-template>
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item>
           <nz-form-label>Contraseña</nz-form-label>
           <nz-form-control nzErrorTip="Ingrese su contraseña (mín. 6 caracteres)">
-            <nz-input-group>
-              <span nz-icon nzType="lock" nzTheme="outline"></span>
+            <nz-input-group [nzPrefix]="lockIconTemplate" [nzSuffix]="suffixTemplate">
               <input
                 nz-input
-                type="password"
+                [type]="passwordVisible ? 'text' : 'password'"
                 formControlName="contrasena"
                 placeholder="Contraseña"
                 autocomplete="current-password"
               />
             </nz-input-group>
+            <ng-template #lockIconTemplate>
+              <span nz-icon nzType="lock" nzTheme="outline" style="font-size: 18px; color: rgba(0, 0, 0, 0.45);"></span>
+            </ng-template>
+            <ng-template #suffixTemplate>
+              <span
+                nz-icon
+                [nzType]="passwordVisible ? 'eye-invisible' : 'eye'"
+                (click)="passwordVisible = !passwordVisible"
+                style="cursor: pointer; font-size: 18px; color: rgba(0, 0, 0, 0.45);"
+              ></span>
+            </ng-template>
           </nz-form-control>
         </nz-form-item>
 

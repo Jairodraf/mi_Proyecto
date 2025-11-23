@@ -12,13 +12,13 @@
       <div class="row justify-content-center">
         <div class="col-12 col-md-6">
           <div class="card shadow-sm">
-            <div class="card-header bg-info text-white">Buscar fichajes por empleado</div>
+            <div class="card-header bg-info text-white">Buscar empleado</div>
               <div class="card-body">
                 <div class="input-group">
                   <input
                     type="text"
                     class="form-control"
-                    placeholder="Buscar por nombre, apellidos, DNI o email..."
+                    placeholder="Buscar por nombre, apellidos, DNI o email"
                     [(ngModel)]="searchQuery"
                     (input)="onEmpleadoSearch($event)"
                     (focus)="showEmpleadosList = true"
@@ -93,7 +93,7 @@
           <!-- Columna derecha (solo filtro) -->
           <div class="col-12 col-md-3 d-flex flex-column">
             <div id="filterCard" class="card mt-1 shadow-sm control-card h-100">
-              <div class="card-header bg-primary text-white text-center">Filtrar</div>
+              <div class="card-header bg-primary text-white text-center">Seleccionar fechas</div>
               <div class="card-body">
                 <label class="form-label small">Fecha inicio</label>
                 <input type="date" class="form-control mb-2" [(ngModel)]="filterStart">
@@ -101,7 +101,7 @@
                 <label class="form-label small">Fecha fin</label>
                 <input type="date" class="form-control mb-2" [(ngModel)]="filterEnd">
 
-                <button class="btn btn-primary btn-lg w-100 mb-2" (click)="applyFilter()">Aplicar filtro</button>
+                <button class="btn btn-primary btn-lg w-100 mb-2" (click)="applyFilter()">Filtrar</button>
               </div>
             </div>
           </div>
@@ -119,7 +119,7 @@
                           [(ngModel)]="incidenceText"
                           placeholder="Describe la incidencia (se asignará al último fichaje de Entrada/Salida)"></textarea>
                 <div class="d-flex justify-content-end">
-                  <button class="btn btn-danger btn-lg" (click)="registerIncidentNow()">Registrar incidencia</button>
+                  <button class="btn btn-danger btn-lg" (click)="registerIncidentNow()">Registrar</button>
                 </div>
               </div>
             </div>

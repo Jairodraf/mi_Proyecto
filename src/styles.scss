@@ -205,3 +205,101 @@ body {
   }
 }
 
+/* ===== Estilos uniformes para todos los botones de la aplicación ===== */
+/* Basado en el botón "Solicitar ausencia" como referencia */
+
+.btn, button, [nz-button] {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.3px !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Botones grandes (btn-lg) */
+.btn-lg {
+  padding: 10px 20px !important;
+  font-size: 1.1rem !important;
+}
+
+/* Hover genérico para todos los botones */
+.btn:hover, button:hover, [nz-button]:hover {
+  transform: translateY(-1px) !important;
+}
+
+/* Botones primarios */
+.btn-primary, button.btn-primary {
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3) !important;
+}
+.btn-primary:hover, button.btn-primary:hover {
+  box-shadow: 0 6px 14px rgba(13, 110, 253, 0.4) !important;
+}
+
+/* Botones de éxito */
+.btn-success, button.btn-success {
+  box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3) !important;
+}
+.btn-success:hover, button.btn-success:hover {
+  box-shadow: 0 6px 14px rgba(25, 135, 84, 0.4) !important;
+}
+
+/* Botones de peligro */
+.btn-danger, button.btn-danger {
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3) !important;
+}
+.btn-danger:hover, button.btn-danger:hover {
+  box-shadow: 0 6px 14px rgba(220, 53, 69, 0.4) !important;
+}
+
+/* Botones de advertencia */
+.btn-warning, button.btn-warning {
+  box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3) !important;
+}
+.btn-warning:hover, button.btn-warning:hover {
+  box-shadow: 0 6px 14px rgba(255, 193, 7, 0.4) !important;
+}
+
+/* Botones de información */
+.btn-info, button.btn-info {
+  box-shadow: 0 4px 10px rgba(13, 202, 240, 0.3) !important;
+}
+.btn-info:hover, button.btn-info:hover {
+  box-shadow: 0 6px 14px rgba(13, 202, 240, 0.4) !important;
+}
+
+/* Responsive: Pantallas grandes (1200px+) */
+@media (min-width: 1200px) {
+  .btn, button, [nz-button] {
+    font-size: 1.2rem !important;
+  }
+
+  .btn-lg {
+    padding: 14px 24px !important;
+    font-size: 1.2rem !important;
+  }
+}
+
+/* Responsive: Pantallas Full HD+ (1920px+) */
+@media (min-width: 1920px) {
+  .btn, button, [nz-button] {
+    font-size: 1.3rem !important;
+  }
+
+  .btn-lg {
+    padding: 16px 28px !important;
+    font-size: 1.3rem !important;
+  }
+}
+
+/* Responsive: Pantallas 2K/4K (2560px+) */
+@media (min-width: 2560px) {
+  .btn, button, [nz-button] {
+    font-size: 1.4rem !important;
+  }
+
+  .btn-lg {
+    padding: 18px 32px !important;
+    font-size: 1.4rem !important;
+  }
+}
+

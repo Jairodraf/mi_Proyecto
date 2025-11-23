@@ -2,13 +2,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;   /* centra todo verticalmente */
-  /* Use remaining viewport area after header/footer so footer remains after content */
-  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
-  background: transparent;   /* deja ver el fondo global */
-  padding: 0 16px;           /* reduce padding para no sumar altura extra */
+  justify-content: center;
+  background: transparent;
+  padding: 0 16px;
+  height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px) - 20px);
   z-index: 1;
-  overflow: hidden;          /* evita cualquier scroll residual */
 }
 
 /* Contenedor centrado */
@@ -26,8 +24,27 @@
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 420px;
+  max-width: 520px;
   margin: 0;
+}
+
+/* Pantallas grandes */
+@media (min-width: 768px) {
+  .card {
+    max-width: 580px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .card {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .card {
+    max-width: 700px;
+  }
 }
 
 /* Interior */
@@ -62,6 +79,35 @@ h1, h3 {
 @media (max-width: 480px) {
   .card-body {
     padding: 20px;
+  }
+}
+
+/* Iconos y texto en pantallas grandes */
+@media (min-width: 1200px) {
+  nz-input-group {
+    span[nz-icon] {
+      font-size: 20px !important;
+    }
+
+    input[nz-input] {
+      font-size: 20px !important;
+    }
+  }
+
+  .login-form-button {
+    font-size: 20px !important;
+  }
+
+  h1 {
+    font-size: 36px !important;
+  }
+
+  h3 {
+    font-size: 24px !important;
+  }
+
+  nz-form-label {
+    font-size: 20px !important;
   }
 }
 

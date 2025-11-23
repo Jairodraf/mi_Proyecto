@@ -23,12 +23,13 @@ export class Header {
 
   logout(): void {
     this.auth.logout();
+
+    // Limpiar también el historial de fichajes local
+    localStorage.removeItem('fichaje_history_v1');
+
     this.router.navigateByUrl('/login', { replaceUrl: true }).then(() => {
-      // bloqueo del primer “atrás”
-      history.pushState(null, '', location.href);
-      window.addEventListener('popstate', () => {
-        history.pushState(null, '', location.href);
-      }, { once: true });
+      // Forzar recarga completa para limpiar estado en memoria
+      window.location.reload();
     });
   }
 }

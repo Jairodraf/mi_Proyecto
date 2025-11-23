@@ -16,7 +16,7 @@
       <ng-container *ngIf="isLogged$ | async">
         <a routerLink="/fichaje" routerLinkActive="active">Fichaje</a>
         <a routerLink="/ausencias" routerLinkActive="active">Ausencias</a>
-        <a *ngIf="isAdmin$ | async" routerLink="/registro" routerLinkActive="active">Registro</a>
+        <a *ngIf="isAdmin$ | async" routerLink="/registro" routerLinkActive="active">Gestión de empleados</a>
         <a (click)="logout()" style="cursor: pointer">Cerrar sesión</a>
       </ng-container>
     </div>

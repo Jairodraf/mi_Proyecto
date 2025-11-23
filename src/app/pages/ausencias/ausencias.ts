@@ -24,6 +24,7 @@ interface Absence {
   templateUrl: './ausencias.html',
   styleUrls: ['./ausencias.scss']
 })
+
 export class Ausencias implements OnInit, OnDestroy {
   absenceStart = '';
   absenceEnd = '';

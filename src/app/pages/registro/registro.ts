@@ -116,11 +116,21 @@ export class Registro implements OnInit, OnDestroy {
 
   selectEmpleado(emp: EmpleadoDto): void {
     this.empleadoSeleccionado = emp;
+
+    // Extraer el número de teléfono sin el prefijo si existe
+    let phoneNumber = '';
+    if (emp.telefono) {
+      // Si el teléfono incluye +34, quitarlo
+      phoneNumber = emp.telefono.replace(/^\+34/, '').trim();
+    }
+
     this.validateForm.patchValue({
       nombre: emp.nombre,
       apellidos: emp.apellidos,
       dni: emp.dni,
       email: emp.email,
+      phoneNumber: phoneNumber,
+      rol: emp.rol,
     });
     this.busquedaEmpleado = '';
     this.empleadosFiltrados = [];

@@ -77,24 +77,6 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   constructor() {
     this.loadHistory();
 
-    const last = this.history[this.history.length - 1];
-    if (last) {
-      this.lastType = last.type;
-      this.lastDate = last.date;
-      this.lastTime = last.time;
-      if (last.type === 'Entrada') {
-        this.entradaDisabled = true;
-        this.salidaDisabled = false;
-      } else {
-        this.entradaDisabled = false;
-        this.salidaDisabled = true;
-      }
-    } else {
-      // Si no hay historial, habilita solo Entrada (primer fichaje)
-      this.entradaDisabled = false;
-      this.salidaDisabled = true;
-    }
-
     this.updateClock();
     this.clockIntervalId = setInterval(() => this.updateClock(), 1000);
 
@@ -105,10 +87,13 @@ export class Fichaje implements AfterViewInit, OnDestroy {
     }
 
     // Load fichajes for the authenticated worker from backend (if logged in)
-      // If user is authenticated, fetch remote fichajes.
-      if (this.auth.hasToken()) {
-        this.loadRemoteFichajes();
-      }
+    // If user is authenticated, fetch remote fichajes.
+    if (this.auth.hasToken()) {
+      this.loadRemoteFichajes();
+    } else {
+      // Si no hay token, usar historial local
+      this.updateLastFromHistory();
+    }
   }
 
   ngAfterViewInit(): void {}
@@ -263,13 +248,13 @@ export class Fichaje implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Load fichajes from backend. If user is Admin, load all fichajes; otherwise load only 'mis fichajes'.
+   * Load fichajes from backend. Always loads only the current user's fichajes
+   * to properly control button states (Entrada/Salida).
    * Replaces local history with server data (the canonical source).
    */
   loadRemoteFichajes(limit?: number) {
-    const isAdmin = this.auth.rol === 'Admin';
-    const obs = isAdmin ? this.api.todos() : this.api.misFichajes(limit);
-    obs.subscribe({
+    // Siempre cargar solo los fichajes del usuario actual para controlar botones correctamente
+    this.api.misFichajes(limit).subscribe({
       next: (rows: FichajeDto[]) => {
         this.history = rows.map((r) => ({
           id: r.id,
@@ -282,12 +267,10 @@ export class Fichaje implements AfterViewInit, OnDestroy {
           }),
           ts: r.fechaHora,
           incidence: r.observacion ?? undefined,
+          empleadoId: r.empleadoId,
         } as HistoryItem));
         this.saveHistory();
         this.updateLastFromHistory();
-        if (isAdmin) {
-          this.msg.info(`Cargados ${rows.length} fichajes (admin)`);
-        }
       },
       error: () => this.msg.error('No se pudieron cargar los fichajes desde el servidor'),
     });
@@ -306,6 +289,13 @@ export class Fichaje implements AfterViewInit, OnDestroy {
         this.entradaDisabled = false;
         this.salidaDisabled = true;
       }
+    } else {
+      // Si no hay historial, habilita solo Entrada (primer fichaje)
+      this.entradaDisabled = false;
+      this.salidaDisabled = true;
+      this.lastType = '—';
+      this.lastDate = '';
+      this.lastTime = '';
     }
   }
 

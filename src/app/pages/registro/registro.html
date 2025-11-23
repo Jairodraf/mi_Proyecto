@@ -4,17 +4,17 @@
       <!-- Encabezado de registro -->
       <div class="col-12 mb-4">
         <div class="page-header-box">
-          <h1>Registro Empleados</h1>
+          <h1>Gestión de Empleados</h1>
         </div>
       </div>
 
       <!-- Card del formulario -->
-      <div class="col-lg-10 col-xl-8">
-        <div class="card shadow-sm">
-          <div class="card-header bg-primary text-white d-flex align-items-center justify-content-center" style="min-height: 60px;">
-            <h5 class="mb-0 fw-bold fs-5">Gestión de Empleados</h5>
+      <div class="col-lg-10 col-xl-9 col-xxl-8">
+        <div class="card shadow-sm registro-card">
+          <div class="card-header bg-primary text-white d-flex align-items-center justify-content-center registro-card-header">
+            <h5 class="mb-0 fw-bold registro-card-title">Gestión de Empleados</h5>
           </div>
-          <div class="card-body">
+          <div class="card-body registro-card-body">
             <form autocomplete="off" [formGroup]="validateForm" (ngSubmit)="submitForm()">
       <!-- Buscar Empleado -->
       <nz-form-item>
@@ -152,11 +152,15 @@
 
       <nz-form-item>
         <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired nzFor="rol">Rol</nz-form-label>
-        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="El rol no es válido!">
-          <input nz-input formControlName="rol" id="rol" autocomplete="off" />
+        <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="Debe seleccionar un rol!">
+          <select nz-input formControlName="rol" id="rol" class="form-select">
+            <option value="" disabled>Seleccione un rol</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+          </select>
           <!-- Si el campo está vacío y no se ha interactuado con el campo -->
           @if (validateForm.get('rol')?.errors?.['required'] && validateForm.get('rol')?.touched) {
-          <span> El rol no puede quedar vacío</span>
+          <span> Debe seleccionar un rol</span>
           }
         </nz-form-control>
       </nz-form-item>
@@ -202,7 +206,7 @@
       <div class="modal-body-app">
         <p class="mb-2">¿Estás seguro de que deseas registrar este empleado?</p>
         <div class="employee-info">
-          <p><b>Nombre:</b> {{ datosConfirmados.nombre }} {{ datosConfirmados.apellidos }}</p>
+          <p><b>Nombre y apellidos:</b> {{ datosConfirmados.nombre }} {{ datosConfirmados.apellidos }}</p>
           <p><b>DNI:</b> {{ datosConfirmados.dni }}</p>
           <p><b>Email:</b> {{ datosConfirmados.email }}</p>
           <p><b>Teléfono:</b> {{ datosConfirmados.phoneNumberPrefix }} {{ datosConfirmados.phoneNumber }}</p>
@@ -225,7 +229,7 @@
       <div class="modal-body-app">
         <p class="mb-2">¿Estás seguro de que deseas actualizar este empleado?</p>
         <div class="employee-info">
-          <p><b>Nombre:</b> {{ datosConfirmados.nombre }} {{ datosConfirmados.apellidos }}</p>
+          <p><b>Nombre y apellidos:</b> {{ datosConfirmados.nombre }} {{ datosConfirmados.apellidos }}</p>
           <p><b>DNI:</b> {{ datosConfirmados.dni }}</p>
           <p><b>Email:</b> {{ datosConfirmados.email }}</p>
           <p><b>Teléfono:</b> {{ datosConfirmados.phoneNumberPrefix }} {{ datosConfirmados.phoneNumber }}</p>
@@ -248,7 +252,7 @@
       <div class="modal-body-app">
         <p class="mb-2">¿Estás seguro de que deseas eliminar este empleado?</p>
         <div class="employee-info">
-          <p><b>Nombre:</b> {{ datosConfirmados.nombre }} {{ datosConfirmados.apellidos }}</p>
+          <p><b>Nombre y apellidos:</b> {{ datosConfirmados.nombre }} {{ datosConfirmados.apellidos }}</p>
           <p><b>DNI:</b> {{ datosConfirmados.dni }}</p>
           <p><b>Email:</b> {{ datosConfirmados.email }}</p>
         </div>

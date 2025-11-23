@@ -41,4 +41,20 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal de confirmación de email -->
+  <div *ngIf="showEmailConfirm" class="modal-backdrop-app">
+    <div class="modal-card-app">
+      <div class="modal-header-app bg-warning text-dark">
+        Confirmar envío
+      </div>
+      <div class="modal-body-app">
+        <p class="mb-0">Se va a enviar un email a FichajeApp y se abrirá su programa de mensajería predeterminado.</p>
+      </div>
+      <div class="modal-footer-app">
+        <button class="btn btn-light" (click)="cancelEmail()">Cancelar</button>
+        <button class="btn btn-warning" (click)="confirmEmail()">Enviar</button>
+      </div>
+    </div>
+  </div>
 </div>

@@ -3,8 +3,6 @@
 /* Asegura que el componente se vea sobre el fondo global */
 :host {
   display: block;
-  /* Use remaining viewport height after header/footer so footer stays after content */
-  min-height: calc(100vh - var(--app-header-height, 72px) - var(--app-footer-height, 64px));
   background: transparent !important; /* deja ver el fondo azul + logo global */
   position: relative;
   z-index: 1;
@@ -309,7 +307,7 @@
 
 /* === Margen inferior extra debajo del cuadro de Resultados === */
 .card.mt-3:last-of-type {
-  margin-bottom: 80px;
+  margin-bottom: 20px;
 }
 
 /* ========================

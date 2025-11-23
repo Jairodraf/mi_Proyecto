@@ -9,24 +9,33 @@
     <!-- Card: Buscar empleado (solo para Admin) -->
     <div *ngIf="isAdmin" class="col-12 mb-3">
       <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">Buscar ausencias por empleado</div>
+        <div class="card-header bg-info text-white">Buscar empleado</div>
         <div class="card-body">
           <div class="input-group">
             <input
               type="text"
               class="form-control"
-              placeholder="Buscar por nombre, apellidos, DNI o email..."
+              placeholder="Buscar por nombre, apellidos, DNI o email"
               [(ngModel)]="searchQuery"
               (input)="onSearchEmpleado()"
               (focus)="showEmpleadosList = true"
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="clearEmpleadoSelection()"
+              *ngIf="selectedEmpleadoId"
             >
-            <button class="btn btn-outline-secondary" type="button" (click)="clearEmpleadoSelection()" *ngIf="selectedEmpleadoId">
               <span>✕</span> Limpiar
             </button>
           </div>
 
           <!-- Lista de empleados filtrados -->
-          <div *ngIf="showEmpleadosList && filteredEmpleados.length > 0" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;">
+          <div
+            *ngIf="showEmpleadosList && filteredEmpleados.length > 0"
+            class="list-group mt-2"
+            style="max-height: 200px; overflow-y: auto"
+          >
             <button
               *ngFor="let emp of filteredEmpleados"
               class="list-group-item list-group-item-action"
@@ -36,7 +45,10 @@
             </button>
           </div>
 
-          <div *ngIf="showEmpleadosList && filteredEmpleados.length === 0" class="alert alert-info mt-2 mb-0">
+          <div
+            *ngIf="showEmpleadosList && filteredEmpleados.length === 0"
+            class="alert alert-info mt-2 mb-0"
+          >
             No se encontraron empleados.
           </div>
         </div>
@@ -46,29 +58,43 @@
     <!-- Card: Registrar ausencia -->
     <div class="col-12 col-md-4 d-flex flex-column mb-4">
       <div id="absenceCard" class="card mt-1 shadow-sm h-100">
-        <div class="card-header bg-primary text-white">Registrar ausencia</div>
+        <div class="card-header bg-primary text-white">Seleccionar fechas</div>
         <div class="card-body">
           <label class="form-label small fw-semibold">Fecha inicio</label>
-          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceStart" [min]="minDate">
+          <input
+            type="date"
+            class="form-control mb-3 text-center"
+            [(ngModel)]="absenceStart"
+            [min]="minDate"
+          />
 
           <label class="form-label small fw-semibold">Fecha fin</label>
-          <input type="date" class="form-control mb-3 text-center" [(ngModel)]="absenceEnd" [min]="minDate">
+          <input
+            type="date"
+            class="form-control mb-3 text-center"
+            [(ngModel)]="absenceEnd"
+            [min]="minDate"
+          />
 
           <label class="form-label small fw-semibold">Motivo</label>
           <div class="input-group mb-4">
             <select class="form-select" [(ngModel)]="absenceReason">
-              <option value="" disabled selected>Seleccione motivo de la ausencia</option>
-              <option value="Vacaciones">Vacaciones</option>
-              <option value="Asistencia médica">Asistencia médica</option>
+              <option value="" disabled selected>Seleccione el motivo de la ausencia</option>
+              <option value="Asistencia a exámen (No recuperable)">Asistencia a exámen (No recuperable)</option>
+              <option value="Asistencia médica (No recuperable)">Asistencia médica (No recuperable)</option>
+              <option value="Cuidado de familiares">Cuidado de familiares</option>
+              <option value="Formación">Formación</option>
               <option value="Traslado de domicilio">Traslado de domicilio</option>
-              <option value="Otro">Otro</option>
+              <option value="Vacaciones">Vacaciones</option>
             </select>
           </div>
 
-          <button class="btn btn-primary btn-lg w-100"
-                  (click)="onRegisterClick()"
-                  [disabled]="!absenceStart || !absenceEnd || loading">
-            {{ loading ? 'Registrando...' : 'Registrar ausencia' }}
+          <button
+            class="btn btn-primary btn-lg w-100"
+            (click)="onRegisterClick()"
+            [disabled]="!absenceStart || !absenceEnd || loading"
+          >
+            {{ loading ? 'Registrando...' : 'Solicitar ausencia' }}
           </button>
         </div>
       </div>
@@ -94,12 +120,12 @@
             <li *ngFor="let a of absences" class="list-group-item absence-row">
               <div class="abs-start">
                 <div class="small text-muted">Inicio</div>
-                <div class="fw-bold">{{ a.start | date:'dd/MM/yyyy' }}</div>
+                <div class="fw-bold">{{ a.start | date : 'dd/MM/yyyy' }}</div>
               </div>
 
               <div class="abs-end">
                 <div class="small text-muted">Fin</div>
-                <div class="fw-bold">{{ a.end | date:'dd/MM/yyyy' }}</div>
+                <div class="fw-bold">{{ a.end | date : 'dd/MM/yyyy' }}</div>
               </div>
 
               <div class="abs-days">
@@ -112,13 +138,21 @@
                 <div class="text-break">{{ a.motivo }}</div>
                 <!-- Insignia de estado visible para todos -->
                 <div class="mt-1">
-                  <span class="status-badge"
-                        [ngClass]="{
-                          'accepted': a.aceptada === true,
-                          'rejected': a.aceptada === false,
-                          'pending': a.aceptada === null
-                        }">
-                    {{ a.aceptada === true ? 'Aceptada' : a.aceptada === false ? 'Rechazada' : 'Pendiente' }}
+                  <span
+                    class="status-badge"
+                    [ngClass]="{
+                      accepted: a.aceptada === true,
+                      rejected: a.aceptada === false,
+                      pending: a.aceptada === null
+                    }"
+                  >
+                    {{
+                      a.aceptada === true
+                        ? 'Aceptada'
+                        : a.aceptada === false
+                        ? 'Rechazada'
+                        : 'Pendiente'
+                    }}
                   </span>
                 </div>
                 <div *ngIf="isAdmin" class="text-muted small mt-1">
@@ -127,19 +161,32 @@
               </div>
 
               <div class="abs-actions text-end">
-                <div *ngIf="isAdmin" class="form-check form-switch mb-2">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    [checked]="a.aceptada === true"
-                    (change)="toggleAceptada(a)"
-                    [disabled]="loading"
-                  >
-                  <label class="form-check-label small">
-                    {{ a.aceptada === true ? 'Aceptada' : a.aceptada === false ? 'Rechazada' : 'Pendiente' }}
-                  </label>
+                <div *ngIf="isAdmin" class="mb-2">
+                  <label class="form-label small fw-semibold mb-1">Aprobar/Denegar</label>
+                  <div class="form-check form-switch">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="a.aceptada === true"
+                      (change)="toggleAceptada(a)"
+                      [disabled]="loading"
+                    />
+                    <label class="form-check-label small">
+                      {{
+                        a.aceptada === true
+                          ? 'Aceptada'
+                          : a.aceptada === false
+                          ? 'Rechazada'
+                          : 'Pendiente'
+                      }}
+                    </label>
+                  </div>
                 </div>
-                <button class="btn btn-danger btn-sm" (click)="removeAbsence(a.id)" [disabled]="loading">
+                <button
+                  class="btn btn-danger btn-sm"
+                  (click)="removeAbsence(a.id)"
+                  [disabled]="loading"
+                >
                   Eliminar
                 </button>
               </div>
@@ -149,23 +196,19 @@
       </div>
 
       <!-- Margen inferior -->
-      <div style="height:80px;"></div>
+      <div style="height: 80px"></div>
     </div>
   </div>
 
   <!-- ===== Modal de aviso de fecha anterior ===== -->
   <div *ngIf="showDateWarning" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-warning text-dark">
-        Fecha no válida
-      </div>
+      <div class="modal-header-app bg-warning text-dark">Fecha no válida</div>
       <div class="modal-body-app">
         <p class="mb-3">
           <strong>No se pueden seleccionar fechas anteriores al día actual.</strong>
         </p>
-        <p class="text-muted">
-          Por favor, selecciona una fecha igual o posterior a hoy.
-        </p>
+        <p class="text-muted">Por favor, selecciona una fecha igual o posterior a hoy.</p>
       </div>
       <div class="modal-footer-app">
         <button class="btn btn-warning" (click)="closeDateWarning()">Entendido</button>
@@ -176,14 +219,12 @@
   <!-- ===== Modal de confirmación (fuera del <li>, global) ===== -->
   <div *ngIf="showConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-primary text-white">
-        Confirmar registro de ausencia
-      </div>
+      <div class="modal-header-app bg-primary text-white">Confirmar registro de ausencia</div>
       <div class="modal-body-app">
         <p class="mb-2">Revisa los datos antes de solicitar la ausencia:</p>
         <ul class="list-unstyled mb-3">
-          <li><strong>Inicio:</strong> {{ pendingAbsence?.start | date:'dd/MM/yyyy' }}</li>
-          <li><strong>Fin:</strong> {{ pendingAbsence?.end | date:'dd/MM/yyyy' }}</li>
+          <li><strong>Inicio:</strong> {{ pendingAbsence?.start | date : 'dd/MM/yyyy' }}</li>
+          <li><strong>Fin:</strong> {{ pendingAbsence?.end | date : 'dd/MM/yyyy' }}</li>
           <li><strong>Días:</strong> {{ pendingAbsence ? getDays(pendingAbsence) : '-' }}</li>
           <li><strong>Motivo:</strong> {{ pendingAbsence?.motivo }}</li>
         </ul>
@@ -198,9 +239,7 @@
   <!-- ===== Modal de error de fechas ===== -->
   <div *ngIf="showDateError" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-danger text-white">
-        Error de fechas
-      </div>
+      <div class="modal-header-app bg-danger text-white">Error de fechas</div>
       <div class="modal-body-app">
         <p class="mb-0">La fecha de fin no puede ser anterior a la de inicio.</p>
       </div>
@@ -213,9 +252,7 @@
   <!-- ===== Modal de éxito ===== -->
   <div *ngIf="showSuccess" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-success text-white">
-        Ausencia registrada
-      </div>
+      <div class="modal-header-app bg-success text-white">Ausencia registrada</div>
       <div class="modal-body-app">
         <p class="mb-0">La ausencia se ha registrado correctamente.</p>
       </div>
@@ -228,12 +265,12 @@
   <!-- ===== Modal de confirmación de email ===== -->
   <div *ngIf="showEmailConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-warning text-dark">
-        Enviar notificación
-      </div>
+      <div class="modal-header-app bg-warning text-dark">Enviar notificación</div>
       <div class="modal-body-app">
         <p class="mb-0">¿Deseas enviar un email de notificación?</p>
-        <small class="text-muted d-block mt-2">Se abrirá tu aplicación de correo predeterminada.</small>
+        <small class="text-muted d-block mt-2"
+          >Se abrirá tu aplicación de correo predeterminada.</small
+        >
       </div>
       <div class="modal-footer-app">
         <button class="btn btn-light" (click)="cancelEmail()">No</button>
@@ -245,9 +282,7 @@
   <!-- ===== Modal de éxito al cambiar estado ===== -->
   <div *ngIf="showStatusSuccess" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-success text-white">
-        Estado actualizado
-      </div>
+      <div class="modal-header-app bg-success text-white">Estado actualizado</div>
       <div class="modal-body-app">
         <p class="mb-0 text-center">{{ statusChangeMessage }}</p>
       </div>
@@ -260,12 +295,14 @@
   <!-- ===== Modal de confirmación de email al cambiar estado ===== -->
   <div *ngIf="showStatusEmailConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-warning text-dark">
-        Enviar notificación al empleado
-      </div>
+      <div class="modal-header-app bg-warning text-dark">Enviar notificación al empleado</div>
       <div class="modal-body-app">
-        <p class="mb-0">¿Deseas enviar un email de notificación al empleado sobre el cambio de estado?</p>
-        <small class="text-muted d-block mt-2">Se abrirá tu aplicación de correo predeterminada.</small>
+        <p class="mb-0">
+          ¿Deseas enviar un email de notificación al empleado sobre el cambio de estado?
+        </p>
+        <small class="text-muted d-block mt-2"
+          >Se abrirá tu aplicación de correo predeterminada.</small
+        >
       </div>
       <div class="modal-footer-app">
         <button class="btn btn-light" (click)="cancelStatusEmail()">No</button>
@@ -277,9 +314,7 @@
   <!-- ===== Modal de confirmación de eliminación ===== -->
   <div *ngIf="showDeleteConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-danger text-white">
-        Confirmar eliminación
-      </div>
+      <div class="modal-header-app bg-danger text-white">Confirmar eliminación</div>
       <div class="modal-body-app">
         <p class="mb-0">¿Estás seguro de que deseas eliminar esta ausencia?</p>
       </div>
@@ -293,9 +328,7 @@
   <!-- ===== Modal de éxito al eliminar ===== -->
   <div *ngIf="showDeleteSuccess" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-success text-white">
-        Ausencia eliminada
-      </div>
+      <div class="modal-header-app bg-success text-white">Ausencia eliminada</div>
       <div class="modal-body-app">
         <p class="mb-0 text-center">La ausencia ha sido eliminada correctamente</p>
       </div>
@@ -308,9 +341,7 @@
   <!-- ===== Modal de error general ===== -->
   <div *ngIf="showError" class="modal-backdrop-app">
     <div class="modal-card-app">
-      <div class="modal-header-app bg-danger text-white">
-        Error
-      </div>
+      <div class="modal-header-app bg-danger text-white">Error</div>
       <div class="modal-body-app">
         <p class="mb-0">{{ errorMessage }}</p>
       </div>
