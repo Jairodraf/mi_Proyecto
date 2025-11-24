@@ -1,12 +1,21 @@
+<!-- Template de la página de Gestión de Ausencias -->
+
 <div class="container-fluid py-4">
   <div class="row justify-content-center">
+
+    <!-- Título de la página -->
     <div class="col-12 mb-4">
       <div class="page-header-box">
         <h1>Ausencias</h1>
       </div>
     </div>
 
-    <!-- Card: Buscar empleado (solo para Admin) -->
+    <!-- ========================================== -->
+    <!-- SECCIÓN 1: BÚSQUEDA DE EMPLEADO (SOLO ADMIN) -->
+    <!-- ========================================== -->
+
+    <!-- Card de búsqueda: permite al Admin buscar y seleccionar un empleado -->
+    <!-- para ver/gestionar sus ausencias -->
     <div *ngIf="isAdmin" class="col-12 mb-3">
       <div class="card shadow-sm">
         <div class="card-header bg-info text-white">Buscar empleado</div>
@@ -55,7 +64,12 @@
       </div>
     </div>
 
-    <!-- Card: Registrar ausencia -->
+    <!-- ========================================== -->
+    <!-- SECCIÓN 2: FORMULARIO DE SOLICITUD DE AUSENCIA -->
+    <!-- ========================================== -->
+
+    <!-- Card para solicitar una nueva ausencia -->
+    <!-- Contiene: fecha inicio, fecha fin, motivo y botón de solicitud -->
     <div class="col-12 col-md-4 d-flex flex-column mb-4">
       <div id="absenceCard" class="card mt-1 shadow-sm h-100">
         <div class="card-header bg-primary text-white">Seleccionar fechas</div>
@@ -100,7 +114,13 @@
       </div>
     </div>
 
-    <!-- Card: Listado de ausencias -->
+    <!-- ========================================== -->
+    <!-- SECCIÓN 3: LISTADO DE AUSENCIAS -->
+    <!-- ========================================== -->
+
+    <!-- Card que muestra todas las ausencias del empleado -->
+    <!-- Si es Admin, muestra ausencias del empleado seleccionado -->
+    <!-- Cada ausencia tiene: fechas, días, motivo, estado y acciones -->
     <div class="col-12 col-md-8 d-flex flex-column mb-4">
       <div id="absenceListCard" class="card mt-1 shadow-sm">
         <div class="card-header bg-primary text-white">Listado de ausencias</div>
@@ -195,12 +215,16 @@
         </div>
       </div>
 
-      <!-- Margen inferior -->
+      <!-- Margen inferior para que no se pegue al footer -->
       <div style="height: 80px"></div>
     </div>
   </div>
 
-  <!-- ===== Modal de aviso de fecha anterior ===== -->
+  <!-- ========================================== -->
+  <!-- MODALES -->
+  <!-- ========================================== -->
+
+  <!-- Modal 1: Aviso cuando se intenta poner una fecha pasada -->
   <div *ngIf="showDateWarning" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-warning text-dark">Fecha no válida</div>
@@ -216,7 +240,8 @@
     </div>
   </div>
 
-  <!-- ===== Modal de confirmación (fuera del <li>, global) ===== -->
+  <!-- Modal 2: Confirmar registro de ausencia antes de enviar -->
+  <!-- Muestra un resumen de la ausencia para que el usuario revise -->
   <div *ngIf="showConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-primary text-white">Confirmar registro de ausencia</div>
@@ -236,7 +261,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de error de fechas ===== -->
+  <!-- Modal 3: Error cuando la fecha fin es anterior a la fecha inicio -->
   <div *ngIf="showDateError" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-danger text-white">Error de fechas</div>
@@ -249,7 +274,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de éxito ===== -->
+  <!-- Modal 4: Confirmación de que la ausencia se registró correctamente -->
   <div *ngIf="showSuccess" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-success text-white">Ausencia registrada</div>
@@ -262,7 +287,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de confirmación de email ===== -->
+  <!-- Modal 5: Preguntar si quiere enviar email de notificación de ausencia -->
   <div *ngIf="showEmailConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-warning text-dark">Enviar notificación</div>
@@ -279,7 +304,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de éxito al cambiar estado ===== -->
+  <!-- Modal 6: Confirmación de que el estado se actualizó (solo Admin) -->
   <div *ngIf="showStatusSuccess" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-success text-white">Estado actualizado</div>
@@ -292,7 +317,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de confirmación de email al cambiar estado ===== -->
+  <!-- Modal 7: Preguntar si quiere enviar email al cambiar estado (solo Admin) -->
   <div *ngIf="showStatusEmailConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-warning text-dark">Enviar notificación al empleado</div>
@@ -311,7 +336,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de confirmación de eliminación ===== -->
+  <!-- Modal 8: Confirmar antes de eliminar una ausencia -->
   <div *ngIf="showDeleteConfirm" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-danger text-white">Confirmar eliminación</div>
@@ -325,7 +350,7 @@
     </div>
   </div>
 
-  <!-- ===== Modal de éxito al eliminar ===== -->
+  <!-- Modal 9: Confirmación de que la ausencia se eliminó correctamente -->
   <div *ngIf="showDeleteSuccess" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-success text-white">Ausencia eliminada</div>
@@ -338,7 +363,8 @@
     </div>
   </div>
 
-  <!-- ===== Modal de error general ===== -->
+  <!-- Modal 10: Error genérico para cualquier problema -->
+  <!-- Muestra el mensaje de error dinámico -->
   <div *ngIf="showError" class="modal-backdrop-app">
     <div class="modal-card-app">
       <div class="modal-header-app bg-danger text-white">Error</div>
@@ -350,4 +376,5 @@
       </div>
     </div>
   </div>
-</div>
+
+</div> <!-- Fin del container principal -->

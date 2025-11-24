@@ -1,94 +1,110 @@
+// ============================================================
+// ESTILOS: PÁGINA DE AUSENCIAS
+// ============================================================
+// Estilos para el registro, listado y gestión de ausencias
+// Incluye diseño responsive para móvil, tablet y escritorio
+
+// ===== CONTENEDOR PRINCIPAL =====
 :host {
   display: block;
-  background: transparent !important;
+  background: transparent !important;  // Fondo transparente para heredar del padre
   position: relative;
   z-index: 1;
-  padding: 0 1rem;
+  padding: 0 1rem;  // Padding lateral
 }
 
-/* === Contenedor general === */
+/* === CONTENEDOR GENERAL === */
 .container-fluid.py-4 {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: column;  // Disposición vertical
+  align-items: center;     // Centrar horizontalmente
 }
 
-/* === Tarjetas generales === */
+/* === TARJETAS GENERALES === */
+// Estilos base para todas las tarjetas
 .card {
-  border: none;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  background-color: #fff;
+  border: none;                        // Sin borde
+  border-radius: 0.5rem;               // Esquinas redondeadas
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);  // Sombra suave
+  transition: transform 0.2s ease, box-shadow 0.2s ease;  // Transiciones suaves
+  background-color: #fff;              // Fondo blanco
 }
 
+// Efecto hover: elevar ligeramente
 .card:hover {
   transform: translateY(-2px);
 }
 
-/* === Encabezados uniformes === */
+/* === ENCABEZADOS DE TARJETAS === */
+// Estilos uniformes para los encabezados
 .card-header {
-  text-align: center;
-  font-weight: 600;
-  font-size: 1.2rem;
-  border-bottom: none;
-  border-radius: 0.5rem 0.5rem 0 0;
+  text-align: center;              // Texto centrado
+  font-weight: 600;                // Negrita
+  font-size: 1.2rem;               // Tamaño de fuente
+  border-bottom: none;             // Sin borde inferior
+  border-radius: 0.5rem 0.5rem 0 0;  // Redondeo solo arriba
   padding: 0.75rem 1rem;
-  color: #fff !important;
+  color: #fff !important;          // Texto blanco
 }
 
+// Color de fondo azul para encabezados primarios
 .card-header.bg-primary {
   background-color: #0d6efd !important;
 }
 
-/* === Tarjeta: Registrar ausencia === */
+/* === TARJETA: REGISTRAR AUSENCIA === */
+// Tarjeta del formulario de registro
 #absenceCard {
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: 720px;  // Ancho máximo
+  margin: 0 auto;    // Centrar horizontalmente
 }
 
+// Etiquetas del formulario
 #absenceCard .form-label {
-  color: #001529;
+  color: #001529;           // Color oscuro
   font-size: 0.9rem;
   margin-bottom: 4px;
 }
 
+// Inputs y selects del formulario
 #absenceCard .form-control,
 #absenceCard .form-select {
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 10px;                  // Bordes redondeados
+  border: 1px solid rgba(0,0,0,0.2);    // Borde suave
   padding: 10px;
   font-size: 1rem;
 }
 
+// Botón principal de registro
 #absenceCard .btn-primary {
   font-weight: 600;
   font-size: 1.1rem;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.3px;                // Espaciado entre letras
   padding: 10px 0;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);  // Sombra azul
   transition: all 0.2s ease;
 }
 
+// Efecto hover del botón: elevar y resaltar sombra
 #absenceCard .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(13, 110, 253, 0.4);
 }
 
-/* === Tarjeta: Listado de ausencias === */
+/* === TARJETA: LISTADO DE AUSENCIAS === */
 #absenceListCard {
-  max-width: 1000px;
-  margin: 0 auto;
+  max-width: 1000px;  // Ancho máximo
+  margin: 0 auto;     // Centrar
 }
 
-/* Prevent card headers from wrapping on narrowish cards */
+// Evitar que los encabezados se dividan en varias líneas
 .card-header {
   white-space: nowrap;
   overflow: visible;
 }
 
-/* Ensure select dropdown is not clipped and is easy to read */
+// Asegurar que los dropdowns no se recorten
 #absenceCard .input-group {
   position: relative;
   z-index: 0;
@@ -96,106 +112,128 @@
 
 #absenceCard .form-select,
 #absenceCard .form-control {
-  z-index: 1050; /* allow dropdowns to appear above nearby elements */
+  z-index: 1050;  // Permitir que los dropdowns aparezcan encima
 }
 
 #absenceListCard .card-body {
   padding: 1.25rem;
 }
 
+// ===== FILA DE AUSENCIA =====
+// Cada fila representa una ausencia en el listado
 .absence-row {
   display: grid;
-  /* Mantener formato horizontal estable con 5 columnas */
+  // Grid con 5 columnas: fechas, días, motivo, estado, acciones
   grid-template-columns: repeat(5, minmax(120px, 1fr));
   gap: 10px;
-  align-items: center;
+  align-items: center;          // Alinear verticalmente al centro
   padding: 0.75rem 1rem;
-  border: 1px solid #eaeaea;
+  border: 1px solid #eaeaea;    // Borde gris claro
   border-radius: 8px;
   margin-bottom: 8px;
   background-color: #fff;
 }
 
+// Etiquetas pequeñas (encabezados de los datos)
 .absence-row .small {
   font-weight: 500;
-  color: #6c757d;
+  color: #6c757d;  // Gris
 }
 
+// Datos en negrita
 .absence-row .fw-bold {
   font-size: 1rem;
 }
 
-/* Insignias de estado */
+/* === INSIGNIAS DE ESTADO === */
+// Badge base para el estado de la ausencia
 .status-badge {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: 999px;  // Completamente redondeado
   font-size: 0.8rem;
   font-weight: 600;
   border: 1px solid transparent;
 }
+
+// Estado: Aceptada (verde)
 .status-badge.accepted {
   color: #0f5132;
   background: #d1e7dd;
   border-color: #badbcc;
 }
+
+// Estado: Denegada (rojo)
 .status-badge.rejected {
   color: #842029;
   background: #f8d7da;
   border-color: #f5c2c7;
 }
+
+// Estado: Pendiente (amarillo)
 .status-badge.pending {
   color: #664d03;
   background: #fff3cd;
   border-color: #ffecb5;
 }
 
-/* === Columna de acciones === */
+/* === COLUMNA DE ACCIONES === */
+// Contenedor de botones de acción (eliminar, toggle estado)
 .abs-actions {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
+  flex-direction: column;  // Disposición vertical
+  gap: 8px;                // Espacio entre botones
+  align-items: flex-end;   // Alinear a la derecha
 }
 
-/* === Botón Eliminar (rojo igual que Registrar incidencia) === */
+/* === BOTÓN ELIMINAR === */
+// Botón rojo para eliminar ausencia
 .abs-actions button {
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 600;
   padding: 6px 14px;
   color: #fff;
-  background-color: #dc3545; /* rojo uniforme */
+  background-color: #dc3545;  // Rojo
   border: none;
-  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);  // Sombra roja
   transition: all 0.2s ease;
 }
+
+// Efecto hover: oscurecer y resaltar
 .abs-actions button:hover {
-  background-color: #bb2d3b;
+  background-color: #bb2d3b;  // Rojo más oscuro
   box-shadow: 0 6px 16px rgba(220, 53, 69, 0.5);
-  transform: translateY(-1px);
+  transform: translateY(-1px);  // Elevar ligeramente
 }
 
-/* === Responsive === */
-/* Tablet */
+/* ===== DISEÑO RESPONSIVE ===== */
+
+/* === TABLET (hasta 992px) === */
 @media (max-width: 992px) {
+  // Cambiar a 2 columnas en tablets
   .absence-row {
     grid-template-columns: 1fr 1fr;
   }
+  // Acciones ocupan todo el ancho
   .abs-actions {
-    grid-column: 1 / -1;
+    grid-column: 1 / -1;  // Expandir a todas las columnas
     text-align: right;
   }
 }
-/* Móvil */
+
+/* === MÓVIL (hasta 576px) === */
 @media (max-width: 576px) {
+  // Una sola columna en móviles
   .absence-row {
     grid-template-columns: 1fr;
   }
+  // Centrar acciones
   .abs-actions {
     text-align: center;
     margin-top: 6px;
   }
+  // Tarjetas a ancho completo
   #absenceCard,
   #absenceListCard {
     width: 100%;
@@ -203,95 +241,111 @@
   }
 }
 
-/* ===== Modal simple controlado por Angular ===== */
+/* ===== MODALES ===== */
+// Modales personalizados controlados por Angular (sin Bootstrap modals)
+
+// Fondo oscuro del modal (backdrop)
 .modal-backdrop-app {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
+  position: fixed;           // Fijo en pantalla
+  inset: 0;                  // Ocupa toda la pantalla
+  background: rgba(0,0,0,0.45);  // Fondo semi-transparente
   display: grid;
-  place-items: center;
-  z-index: 2000;
+  place-items: center;       // Centrar el modal
+  z-index: 2000;             // Por encima de todo
 }
 
+// Tarjeta del modal
 .modal-card-app {
-  width: min(540px, 92vw);
+  width: min(540px, 92vw);   // Máximo 540px o 92% del ancho viewport
   background: #fff;
   border-radius: 14px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);  // Sombra pronunciada
   overflow: hidden;
-  animation: modalIn 120ms ease-out;
+  animation: modalIn 120ms ease-out;  // Animación de entrada
 }
 
+// Animación de aparición del modal
 @keyframes modalIn {
-  from { transform: translateY(8px); opacity: 0; }
-  to   { transform: translateY(0);   opacity: 1; }
+  from { transform: translateY(8px); opacity: 0; }  // Desde abajo y transparente
+  to   { transform: translateY(0);   opacity: 1; }  // A posición normal y opaco
 }
 
+// Encabezado del modal
 .modal-header-app {
   padding: 12px 16px;
   font-weight: 600;
   text-align: center;
 }
 
+// Cuerpo del modal
 .modal-body-app {
   padding: 16px;
-  color: #001529;
+  color: #001529;  // Texto oscuro
 }
 
+// Footer del modal (botones)
 .modal-footer-app {
   display: flex;
-  gap: 10px;
-  justify-content: flex-end;
+  gap: 10px;                 // Espacio entre botones
+  justify-content: flex-end; // Alinear botones a la derecha
   padding: 12px 16px;
-  background: #f7f8fa;
-  border-top: 1px solid rgba(0,0,0,0.05);
+  background: #f7f8fa;       // Fondo gris claro
+  border-top: 1px solid rgba(0,0,0,0.05);  // Línea separadora
 }
 
+// Estilos base para botones del modal
 .modal-footer-app .btn {
   border-radius: 10px;
   padding: 8px 14px;
   font-weight: 600;
 }
 
+// Botón de peligro (eliminar, confirmar acción destructiva)
 .modal-footer-app .btn-danger {
-  background-color: #dc3545;
+  background-color: #dc3545;  // Rojo
   color: #fff;
   border: none;
   box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
 }
 .modal-footer-app .btn-danger:hover {
-  background-color: #bb2d3b;
+  background-color: #bb2d3b;  // Rojo más oscuro
   box-shadow: 0 6px 16px rgba(220, 53, 69, 0.45);
 }
 
+// Botón secundario (cancelar)
 .modal-footer-app .btn-light {
   background: #fff;
   border: 1px solid #e3e6ea;
   color: #001529;
 }
 
+// Botón de advertencia (confirmaciones importantes)
 .modal-footer-app .btn-warning {
-  background-color: #ffc107;
+  background-color: #ffc107;  // Amarillo
   color: #212529;
   border: none;
   box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3);
 }
 .modal-footer-app .btn-warning:hover {
-  background-color: #e0a800;
+  background-color: #e0a800;  // Amarillo más oscuro
   box-shadow: 0 6px 16px rgba(255, 193, 7, 0.45);
 }
 
-/* Large screen scaling */
+/* === PANTALLAS GRANDES (desde 1200px) === */
+// Aumentar tamaños para mejor legibilidad en pantallas grandes
 @media (min-width: 1200px) {
+  // Tarjeta de registro más ancha
   #absenceCard {
     max-width: 700px;
   }
 
+  // Etiquetas más grandes
   #absenceCard .form-label {
     font-size: 1rem;
     margin-bottom: 6px;
   }
 
+  // Inputs más grandes y espaciosos
   #absenceCard .form-control,
   #absenceCard .form-select {
     padding: 14px;
@@ -299,31 +353,37 @@
     height: 50px;
   }
 
+  // Botón principal más grande
   #absenceCard .btn-primary {
     font-size: 1.2rem;
     padding: 14px 0;
     height: 54px;
   }
 
+  // Tarjeta de listado a ancho máximo
   #absenceListCard {
     max-width: 1000px;
   }
 
+  // Más padding en el cuerpo
   #absenceListCard .card-body {
     padding: 1.75rem;
   }
 
+  // Encabezados más grandes
   .card-header {
     font-size: 1.35rem;
     padding: 1rem 1.25rem;
   }
 
+  // Filas más espaciosas
   .absence-row {
     gap: 14px;
     padding: 1rem 1.25rem;
     margin-bottom: 10px;
   }
 
+  // Texto más grande en las filas
   .absence-row .fw-bold {
     font-size: 1.1rem;
   }
@@ -332,6 +392,7 @@
     font-size: 0.95rem;
   }
 
+  // Botones de acción más grandes
   .abs-actions button {
     font-size: 1rem;
     padding: 8px 18px;
