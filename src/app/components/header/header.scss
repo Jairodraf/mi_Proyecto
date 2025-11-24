@@ -1,109 +1,128 @@
-/* ===== HEADER ===== */
+// ============================================
+// HEADER PRINCIPAL
+// ============================================
+
+// Barra de navegación fija en la parte superior
 header {
-  position: fixed;
+  position: fixed; // Se queda arriba aunque hagas scroll
   left: 0; right: 0; top: 0;
   height: auto;
-  background-color: rgba(255,255,255,0.85);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px); /* Safari iOS */
+  background-color: rgba(255,255,255,0.85); // Fondo blanco semi-transparente
+  backdrop-filter: blur(4px); // Efecto blur del fondo
+  -webkit-backdrop-filter: blur(4px); // Compatibilidad Safari iOS
   padding: 12px 20px;
-  border-bottom-left-radius: 8px;
+  border-bottom-left-radius: 8px; // Bordes redondeados abajo
   border-bottom-right-radius: 8px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-  z-index: 1060;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12); // Sombra suave
+  z-index: 1060; // Por encima de otros elementos
 }
 
+// Navegación flex: logo a la izquierda, links a la derecha
 header nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-header .logo { flex: 0 0 auto; }
+header .logo { flex: 0 0 auto; } // Logo sin crecer
 .logo { display: flex; align-items: center; }
 
+// Link del logo (sin subrayado)
 .logo-link {
   display: flex; align-items: center;
   text-decoration: none; color: #001529;
 }
 
-/* ===== LOGO (escritorio por defecto) ===== */
+// ============================================
+// LOGO (tamaño por defecto en escritorio)
+// ============================================
+// Imagen del logo
 .logo-link img {
   display: block;
   max-height: 100px;
-  width: 200px;              /* tamaño cómodo en PC */
-  aspect-ratio: 16 / 9;
-  object-fit: contain;
+  width: 200px; // Tamaño cómodo en PC
+  aspect-ratio: 16 / 9; // Mantiene proporción 16:9
+  object-fit: contain; // No se deforma
   margin-right: 12px;
   border-radius: 6px;
 }
 
 header .logo a { color: #001529; text-decoration: none; }
 
-/* ✔️ FIX selector: espacio entre header y .logo */
+// Título del logo (nombre de la app)
 header .logo h2 {
   display: flex;
-  color: #001529;
+  color: #001529; // Azul oscuro
   margin: 0;
   font-size: 40px;
-  white-space: nowrap;
+  white-space: nowrap; // No se parte en varias líneas
 }
 
-/* ===== LINKS ===== */
+// ============================================
+// LINKS DE NAVEGACIÓN
+// ============================================
+// Contenedor de los links (Fichaje, Ausencias, etc.)
 header .header-links {
   display: flex;
-  gap: 10px;
-  flex: 1 1 auto;
-  justify-content: flex-end;
+  gap: 10px; // Espacio entre links
+  flex: 1 1 auto; // Crece para empujar a la derecha
+  justify-content: flex-end; // Alineados a la derecha
   min-width: 200px;
 }
 
+// Estilos de cada link individual
 header .header-links a {
   font-size: 20px;
-  color: #001529;
-  text-decoration: none;
+  color: #001529; // Azul oscuro
+  text-decoration: none; // Sin subrayado
   padding: 10px 20px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  border-radius: 20px; // Bordes redondeados
+  transition: all 0.3s ease; // Animación suave
 }
 
+// Efecto hover de los links
 header .header-links a:hover {
-  background-color: rgba(13,110,253,0.4);
-  color: #fff; /* ✔️ mejor contraste */
-  box-shadow: 0 0 10px rgba(13,110,253,0.1);
-  transform: translateY(-2px);
+  background-color: rgba(13,110,253,0.4); // Fondo azul semi-transparente
+  color: #fff; // Texto blanco para mejor contraste
+  box-shadow: 0 0 10px rgba(13,110,253,0.1); // Sombra suave
+  transform: translateY(-2px); // Se eleva un poco
 }
 
+// Link activo (página actual)
 header .header-links a.active {
   background-color: rgba(13,110,253,0.4);
   color: #fff;
-  font-weight: 600;
-  box-shadow: 0 0 12px rgba(13,110,253,0.3);
+  font-weight: 600; // Más grueso
+  box-shadow: 0 0 12px rgba(13,110,253,0.3); // Sombra más visible
 }
 
-/* ===== Tablets y abajo ===== */
+// ============================================
+// DISEÑO RESPONSIVE
+// ============================================
+
+// Tablets (hasta 992px)
 @media (max-width: 992px) {
   header { padding: 10px 14px; }
 
   header nav {
-    flex-direction: column;
+    flex-direction: column; // Logo arriba, links abajo
     align-items: stretch;
     gap: 8px;
   }
 
-  /* Logo más compacto */
+  // Logo más compacto en tablets
   .logo-link img {
     max-height: 56px;
-    width: auto;           /* no forzar 200px en móvil/tablet */
+    width: auto; // Se adapta al tamaño
     margin-right: 10px;
   }
 
-  header .logo h2 { font-size: 28px; }
+  header .logo h2 { font-size: 28px; } // Título más pequeño
 
-  /* Links centrados y con wrap */
+  // Links centrados y que se reorganizan
   header .header-links {
-    justify-content: center;
-    flex-wrap: wrap;
+    justify-content: center; // Centrados en vez de a la derecha
+    flex-wrap: wrap; // Se parten en varias líneas si no caben
     gap: 8px;
   }
   header .header-links a {
@@ -113,26 +132,34 @@ header .header-links a.active {
   }
 }
 
-/* ===== Móviles ===== */
+// Móviles (hasta 600px)
 @media (max-width: 600px) {
   header {
     padding: 8px 12px;
-    border-bottom-left-radius: 0;
+    border-bottom-left-radius: 0; // Sin bordes redondeados en móvil
     border-bottom-right-radius: 0;
   }
 
-  .logo-link img { max-height: 44px; margin-right: 8px; } /* 👈 movido aquí */
-  header .logo h2 { font-size: 22px; }
+  .logo-link img { max-height: 44px; margin-right: 8px; } // Logo aún más pequeño
+  header .logo h2 { font-size: 22px; } // Título más pequeño
 
   header .header-links { gap: 6px; }
 }
 
-/* ===== Espaciado para que el header fijo no tape el contenido ===== */
+// ============================================
+// ESPACIADO PARA EL CONTENIDO
+// ============================================
+
+// Añade padding arriba para que el header fijo no tape el contenido
 :host ::ng-deep main {
-  padding-top: clamp(70px, 12vh, 120px); /* ✔️ reemplaza var(...) por clamp(...) */
+  padding-top: clamp(70px, 12vh, 120px); // Se adapta entre 70px y 120px
 }
 
-/* ===== Optimización para pantallas grandes (Full HD+) ===== */
+// ============================================
+// PANTALLAS GRANDES
+// ============================================
+
+// Full HD y superiores (1920px+)
 @media (min-width: 1920px) {
   header {
     padding: 14px 40px;
@@ -158,7 +185,7 @@ header .header-links a.active {
   }
 }
 
-/* ===== Optimización para pantallas 2K/4K (2560px+) ===== */
+// Pantallas 2K y 4K (2560px+)
 @media (min-width: 2560px) {
   header {
     padding: 16px 60px;

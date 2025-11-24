@@ -1,28 +1,32 @@
+// Estilos del footer principal
 .footer {
-  position: relative; /* in-flow element so it stays after main */
+  position: relative; // Se queda en el flujo normal después del contenido
   left: 0;
   right: 0;
   width: 100%;
+  // Gradiente azul suave con transparencia
   background: linear-gradient(135deg,
     rgba(13, 110, 253, 0.08) 0%,
     rgba(13, 202, 240, 0.05) 50%,
     rgba(255, 255, 255, 0.92) 100%);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px); // Compatibilidad Safari
   padding: 16px 20px;
-  box-shadow: 0 -6px 20px rgba(13, 110, 253, 0.12);
+  box-shadow: 0 -6px 20px rgba(13, 110, 253, 0.12); // Sombra hacia arriba
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 3px solid rgba(13, 110, 253, 0.3);
-  flex-wrap: wrap; /* permite reorganizar en móviles */
+  border-top: 3px solid rgba(13, 110, 253, 0.3); // Línea superior azul
+  flex-wrap: wrap; // Los elementos se reorganizan en móviles
   transition: all 0.3s ease;
 }
 
+// Efecto hover del footer completo
 .footer:hover {
-  box-shadow: 0 -8px 25px rgba(13, 110, 253, 0.18);
+  box-shadow: 0 -8px 25px rgba(13, 110, 253, 0.18); // Sombra más pronunciada
 }
 
+// Título del footer (nombre de la app)
 .footer h3 {
   flex: 1;
   text-align: center;
@@ -33,34 +37,36 @@
   letter-spacing: 0.3px;
 }
 
+// Contenedor de los links (Contacto y Privacidad)
 .footer-links {
   display: flex;
   font-size: 18px;
-  gap: 10px;
+  gap: 10px; // Espacio entre links
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: wrap; // Se adapta en pantallas pequeñas
 }
 
+// Estilos de los links individuales
 .footer-links a {
-  color: #001529;
-  text-decoration: none;
+  color: #001529; // Azul oscuro
+  text-decoration: none; // Sin subrayado
   padding: 8px 16px;
   border-radius: 12px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; // Animación suave
   border: 1px solid transparent;
 }
 
-/* 🔹 Hover */
+// Efecto hover de los links
 .footer-links a:hover {
-  background-color: #0d6efd;
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(13, 110, 253, 0.35);
-  transform: translateY(-3px);
+  background-color: #0d6efd; // Fondo azul
+  color: #fff; // Texto blanco
+  box-shadow: 0 4px 15px rgba(13, 110, 253, 0.35); // Sombra
+  transform: translateY(-3px); // Se eleva un poco
   border-color: rgba(13, 110, 253, 0.5);
 }
 
-/* 🔹 Activo */
+// Link activo (página actual)
 .footer-links a.active {
   background-color: #0d6efd;
   color: #fff;
@@ -69,25 +75,27 @@
   border-color: rgba(13, 110, 253, 0.6);
 }
 
-/* No forzamos padding en main anymore — layout uses flex so footer is after content */
+// ============================================
+// DISEÑO RESPONSIVE
+// ============================================
 
-/* 📱 Diseño responsive */
+// Tablets y móviles (hasta 768px)
 @media (max-width: 768px) {
   .footer {
-    flex-direction: column;
+    flex-direction: column; // Todo en columna vertical
     text-align: center;
     padding: 12px;
-    height: auto; /* se adapta al contenido */
+    height: auto; // Se adapta al contenido
   }
 
   .footer h3 {
-    font-size: 16px;
+    font-size: 16px; // Título más pequeño
     margin-bottom: 8px;
   }
 
   .footer-links {
-    justify-content: center;
-    gap: 14px;
+    justify-content: center; // Links centrados
+    gap: 14px; // Más espacio entre ellos
   }
 
   .footer-links a {
@@ -96,7 +104,7 @@
   }
 }
 
-/* 🖥️ Optimización para pantallas grandes (Full HD+) */
+// Pantallas Full HD y superiores (1920px+)
 @media (min-width: 1920px) {
   .footer {
     padding: 20px 40px;
@@ -117,7 +125,7 @@
   }
 }
 
-/* 🖥️ Optimización para pantallas 2K/4K (2560px+) */
+// Pantallas 2K y 4K (2560px+)
 @media (min-width: 2560px) {
   .footer {
     padding: 24px 60px;

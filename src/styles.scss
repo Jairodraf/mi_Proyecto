@@ -1,130 +1,164 @@
+// ============================================
+// ESTILOS GLOBALES DE LA APLICACIÓN
+// ============================================
+
+// Importar estilos de ng-zorro (componentes de Ant Design)
 @import "ng-zorro-antd/ng-zorro-antd.min.css";
 
-
+// Reset CSS: eliminar márgenes y paddings por defecto
 * {
-  box-sizing: border-box;
+  box-sizing: border-box; // El padding y border se incluyen en el width/height
   margin: 0;
   padding: 0;
 }
+
+// Las imágenes ocupan todo el ancho del contenedor
 img {
   width: 100%;
 }
 
-// App color variables
-// Update: stronger light-blue tone for app background
-$blue-100: #dbeeff; // updated light blue
+// ============================================
+// VARIABLES DE COLOR
+// ============================================
 
-/* Use Bootstrap CSS variable if available, otherwise fall back to $blue-100 */
+// Color azul claro para el fondo de la app
+$blue-100: #dbeeff;
+
+// Variables CSS personalizadas (accesibles desde toda la app)
 :root {
-  --app-bg: var(--bs-blue-100, #{$blue-100});
-  --app-footer-height: 64px; /* space reserved for fixed footer */
-  --app-header-height: 72px; /* reserved space for fixed header */
+  --app-bg: var(--bs-blue-100, #{$blue-100}); // Color de fondo principal
+  --app-footer-height: 64px; // Altura del footer fijo
+  --app-header-height: 72px; // Altura del header fijo
 }
 
-/* Apply background to the whole app */
+// ============================================
+// LAYOUT PRINCIPAL
+// ============================================
+
+// Toda la app ocupa el 100% de la altura
 html, body, app-root {
   height: 100%;
 }
 
-/* Layout: column flex so footer stays at the end of the page when content is short
-   and moves with the page when content overflows. */
+// Layout flex en columna: header arriba, main en medio, footer abajo
+// El footer siempre está al final, incluso si hay poco contenido
 body {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  flex-direction: column; // Todo en columna vertical
+  min-height: 100vh; // Mínimo el alto de la pantalla
   margin: 0;
-  background-color: var(--app-bg);
+  background-color: var(--app-bg); // Fondo azul claro
   position: relative;
-  overflow-x: hidden;
+  overflow-x: hidden; // Sin scroll horizontal
 }
 
-/* Make the main content area grow so footer is pushed to the bottom */
+// Contenedor principal (donde se cargan las páginas)
 main {
-  flex: 1 0 auto;
-  /* Reserve exact space for header and footer so main fits the viewport when content is short */
-  padding-top: var(--app-header-height) !important;
-  padding-bottom: 20px;
-  /* Ensure main fills the remaining viewport area (header + main + footer = 100vh) */
+  flex: 1 0 auto; // Crece para empujar el footer al fondo
+  padding-top: var(--app-header-height) !important; // Espacio para el header fijo
+  padding-bottom: 20px; // Espacio al final
+  // Altura mínima: pantalla completa menos header y footer
   min-height: calc(100vh - var(--app-header-height) - var(--app-footer-height));
 }
 
-/* Ensure routed page content always leaves at least 20px before the footer
-   This targets the last direct child inserted into <main> by the router. */
+// El último elemento de main siempre tiene margen inferior
+// (para que no se pegue al footer)
 main > *:last-child {
   margin-bottom: 20px !important;
 }
 
+// ============================================
+// MARCA DE AGUA (LOGO DE FONDO)
+// ============================================
+
+// Logo muy transparente de fondo en toda la app
 body::before {
   content: "";
-  position: fixed;
-  inset: 0;
+  position: fixed; // Se queda fijo aunque hagas scroll
+  inset: 0; // Ocupa toda la pantalla
   background-image: url("/Logo_FichajeApp.png");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: cover; /* ajusta el tamaño del logo */
-  opacity: 0.03; /* controla el nivel de transparencia (0.05 = muy sutil) */
-  z-index: 0; /* detrás de todo el contenido */
-  pointer-events: none; /* no bloquea clics */
+  background-size: cover; // Se ajusta al tamaño
+  opacity: 0.03; // Muy transparente (casi invisible)
+  z-index: 0; // Detrás de todo el contenido
+  pointer-events: none; // No bloquea clics
   mix-blend-mode: normal;
 }
 
 body {
-  background-attachment: fixed;
-  overflow-x: hidden;
+  background-attachment: fixed; // El fondo no se mueve con el scroll
+  overflow-x: hidden; // Sin scroll horizontal
 }
 
-/* Estilo de encabezado de página (matching header style) */
+// ============================================
+// ENCABEZADOS DE PÁGINA
+// ============================================
+
+// Caja de título de cada página (ej: "Gestión de Fichajes")
+// Tiene el mismo estilo que el header principal
 .page-header-box {
   display: flex;
   align-items: center;
   justify-content: center;
+  // Gradiente azul suave con transparencia
   background: linear-gradient(135deg,
     rgba(13, 110, 253, 0.12) 0%,
     rgba(13, 202, 240, 0.08) 50%,
     rgba(255, 255, 255, 0.9) 100%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px); // Efecto blur del fondo
+  -webkit-backdrop-filter: blur(6px); // Compatibilidad Safari
   border: 2px solid rgba(13, 110, 253, 0.25);
-  border-top: 4px solid #0d6efd;
+  border-top: 4px solid #0d6efd; // Línea azul superior más gruesa
   padding: 30px 20px;
   border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.15);
+  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.15); // Sombra suave
   margin: 0 auto;
   max-width: 800px;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; // Animación suave
 }
 
+// Efecto hover: se eleva un poco
 .page-header-box:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.25);
+  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.25); // Sombra más pronunciada
 }
 
+// Título dentro del page-header
 .page-header-box h1 {
-  color: #001529;
+  color: #001529; // Azul oscuro
   font-size: 40px;
   font-weight: bold;
   margin: 0;
   text-align: center;
 }
 
-/* Responsive para tablets */
+// ============================================
+// RESPONSIVE: TABLETS Y MÓVILES
+// ============================================
+
+// Tablets (hasta 992px)
 @media (max-width: 992px) {
   .page-header-box h1 {
-    font-size: 32px;
+    font-size: 32px; // Título más pequeño
   }
 }
 
-/* Responsive para móviles */
+// Móviles (hasta 600px)
 @media (max-width: 600px) {
   .page-header-box {
-    padding: 10px 16px;
+    padding: 10px 16px; // Menos padding
   }
   .page-header-box h1 {
-    font-size: 24px;
+    font-size: 24px; // Título aún más pequeño
   }
 }
 
-/* Optimización para pantallas grandes (Full HD+) */
+// ============================================
+// RESPONSIVE: PANTALLAS GRANDES
+// ============================================
+
+// Full HD y superiores (1920px+)
 @media (min-width: 1920px) {
   .page-header-box {
     max-width: 900px;
@@ -157,7 +191,7 @@ body {
   }
 }
 
-/* Optimización para pantallas 2K/4K (2560px+) */
+// Pantallas 2K y 4K (2560px+)
 @media (min-width: 2560px) {
   .page-header-box {
     max-width: 1000px;
@@ -205,29 +239,32 @@ body {
   }
 }
 
-/* ===== Estilos uniformes para todos los botones de la aplicación ===== */
-/* Basado en el botón "Solicitar ausencia" como referencia */
+// ============================================
+// ESTILOS UNIFORMES DE BOTONES
+// ============================================
 
+// Estilos base para TODOS los botones de la app
+// (Bootstrap, ng-zorro y botones personalizados)
 .btn, button, [nz-button] {
   font-weight: 600 !important;
   font-size: 1.1rem !important;
-  letter-spacing: 0.3px !important;
-  border-radius: 12px !important;
-  transition: all 0.2s ease !important;
+  letter-spacing: 0.3px !important; // Espaciado entre letras
+  border-radius: 12px !important; // Bordes redondeados
+  transition: all 0.2s ease !important; // Animación suave
 }
 
-/* Botones grandes (btn-lg) */
+// Botones grandes (clase btn-lg de Bootstrap)
 .btn-lg {
   padding: 10px 20px !important;
   font-size: 1.1rem !important;
 }
 
-/* Hover genérico para todos los botones */
+// Efecto hover genérico: se elevan un poco
 .btn:hover, button:hover, [nz-button]:hover {
   transform: translateY(-1px) !important;
 }
 
-/* Botones primarios */
+// Botones primarios (azul) - Acciones principales
 .btn-primary, button.btn-primary {
   box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3) !important;
 }
@@ -235,7 +272,7 @@ body {
   box-shadow: 0 6px 14px rgba(13, 110, 253, 0.4) !important;
 }
 
-/* Botones de éxito */
+// Botones de éxito (verde) - Confirmar, aprobar
 .btn-success, button.btn-success {
   box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3) !important;
 }
@@ -243,7 +280,7 @@ body {
   box-shadow: 0 6px 14px rgba(25, 135, 84, 0.4) !important;
 }
 
-/* Botones de peligro */
+// Botones de peligro (rojo) - Eliminar, denegar
 .btn-danger, button.btn-danger {
   box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3) !important;
 }
@@ -251,7 +288,7 @@ body {
   box-shadow: 0 6px 14px rgba(220, 53, 69, 0.4) !important;
 }
 
-/* Botones de advertencia */
+// Botones de advertencia (amarillo) - Avisos
 .btn-warning, button.btn-warning {
   box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3) !important;
 }
@@ -259,7 +296,7 @@ body {
   box-shadow: 0 6px 14px rgba(255, 193, 7, 0.4) !important;
 }
 
-/* Botones de información */
+// Botones de información (cian) - Información adicional
 .btn-info, button.btn-info {
   box-shadow: 0 4px 10px rgba(13, 202, 240, 0.3) !important;
 }
@@ -267,10 +304,14 @@ body {
   box-shadow: 0 6px 14px rgba(13, 202, 240, 0.4) !important;
 }
 
-/* Responsive: Pantallas grandes (1200px+) */
+// ============================================
+// RESPONSIVE: BOTONES EN PANTALLAS GRANDES
+// ============================================
+
+// Pantallas grandes (1200px+)
 @media (min-width: 1200px) {
   .btn, button, [nz-button] {
-    font-size: 1.2rem !important;
+    font-size: 1.2rem !important; // Botones un poco más grandes
   }
 
   .btn-lg {
@@ -279,10 +320,10 @@ body {
   }
 }
 
-/* Responsive: Pantallas Full HD+ (1920px+) */
+// Pantallas Full HD+ (1920px+)
 @media (min-width: 1920px) {
   .btn, button, [nz-button] {
-    font-size: 1.3rem !important;
+    font-size: 1.3rem !important; // Botones más grandes
   }
 
   .btn-lg {
@@ -291,10 +332,10 @@ body {
   }
 }
 
-/* Responsive: Pantallas 2K/4K (2560px+) */
+// Pantallas 2K/4K (2560px+)
 @media (min-width: 2560px) {
   .btn, button, [nz-button] {
-    font-size: 1.4rem !important;
+    font-size: 1.4rem !important; // Botones aún más grandes
   }
 
   .btn-lg {

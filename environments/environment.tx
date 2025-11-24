@@ -1,4 +1,18 @@
+/**
+ * Configuración de entorno para DESARROLLO
+ *
+ * Este archivo define las variables de entorno para el modo de desarrollo.
+ * En desarrollo se usa un proxy configurado en proxy.conf.json para evitar
+ * problemas de CORS al hacer peticiones al backend en localhost:5000
+ *
+ * @see proxy.conf.json - Configuración del proxy para desarrollo
+ */
 export const environment = {
+  // Indica si está en modo producción (false para desarrollo)
   production: false,
-  apiBase: '/api'   // con proxy
+
+  // URL base del API (con proxy que redirige a http://localhost:5000)
+  // En desarrollo: '/api' → proxy → 'http://localhost:5000/api'
+  // En producción: se debe cambiar a la URL real del servidor
+  apiBase: '/api'
 };

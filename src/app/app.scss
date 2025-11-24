@@ -1,14 +1,41 @@
-html, body { height: 100%; margin: 0; }
-:host { display: flex; min-height: 100vh; flex-direction: column; }
-.app-main { flex: 1; }
+// ============================================
+// ESTILOS DEL COMPONENTE PRINCIPAL (APP)
+// ============================================
 
-/* Compensa el header fijo cuando está visible */
-.mt-fixed-header { margin-top: 64px; } /* ajusta a la altura real */
+// HTML y body ocupan toda la altura de la ventana
+html, body {
+  height: 100%;
+  margin: 0;
+}
 
-/* Fondo degradado (mismo que venías usando) */
+// Layout flex del componente principal
+// :host se refiere al elemento <app-root> en el DOM
+:host {
+  display: flex;
+  min-height: 100vh; // Mínimo el alto de la ventana
+  flex-direction: column; // Elementos en columna (header, main, footer)
+}
+
+// El main crece para empujar el footer al fondo
+.app-main {
+  flex: 1;
+}
+
+// Clase auxiliar para compensar el header fijo
+// Añade margen superior cuando el header tapa contenido
+.mt-fixed-header {
+  margin-top: 64px; // Ajustar según altura real del header
+}
+
+// ============================================
+// FONDO DEGRADADO (OPCIONAL)
+// ============================================
+
+// Clase para aplicar fondo degradado azul
+// (de #0083B0 a #00B4DB de izquierda a derecha)
 .bg-degrade{
   background: #00B4DB;
-  background: -webkit-linear-gradient(to right, #0083B0, #00B4DB);
-  background: linear-gradient(to right, #0083B0, #00B4DB);
+  background: -webkit-linear-gradient(to right, #0083B0, #00B4DB); // Safari
+  background: linear-gradient(to right, #0083B0, #00B4DB); // Estándar
   min-height: 100%;
 }

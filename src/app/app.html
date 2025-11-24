@@ -1,5 +1,14 @@
+<!-- Template del componente principal de la aplicación -->
+
+<!-- Header: barra de navegación fija en la parte superior -->
 <app-header></app-header>
+
+<!-- Main: contenedor principal donde se cargan las páginas -->
 <main>
+  <!-- RouterOutlet: aquí Angular carga dinámicamente el componente de cada ruta -->
+  <!-- Por ejemplo: Login, Fichaje, Ausencias, Registro, etc. -->
   <router-outlet></router-outlet>
 </main>
+
+<!-- Footer: pie de página con links a Contacto y Privacidad -->
 <app-footer></app-footer>
